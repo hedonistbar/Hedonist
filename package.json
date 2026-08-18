@@ -1,0 +1,35 @@
+{
+  "name": "hedonist-ai-marketer",
+  "version": "0.1.0",
+  "description": "AI marketer for restaurants — daily content pipeline, Telegram approval, inbox and reviews automation. Multi-tenant. Pilot: Hedonist Bar & Kitchen.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/bot/index.ts",
+    "start": "node dist/bot/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "migrate": "tsx src/db/migrate.ts",
+    "seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5",
+    "grammy": "^1.30.0",
+    "pg": "^8.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.6",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}
