@@ -1,0 +1,85 @@
+:root {
+  --ground: #f6f0e4;
+  --surface: #fffdf8;
+  --surface-2: #efe6d3;
+  --border: #ddd0b8;
+  --text: #2a2117;
+  --text-muted: #6b5d48;
+  --accent: #b5652c;
+  --accent-strong: #8f4e20;
+  --accent-soft: rgba(181, 101, 44, 0.12);
+  --success: #4f7a52;
+  --success-bg: rgba(79, 122, 82, 0.1);
+  --danger: #a83f2c;
+  --danger-bg: rgba(168, 63, 44, 0.1);
+  --shadow: 0 1px 2px rgba(42, 33, 23, 0.06), 0 6px 20px -8px rgba(42, 33, 23, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #1a130e;
+    --surface: #221a12;
+    --surface-2: #2c2115;
+    --border: #3e2e1c;
+    --text: #f3e9d8;
+    --text-muted: #b3a28a;
+    --accent: #d68b4a;
+    --accent-strong: #e9a667;
+    --accent-soft: rgba(214, 139, 74, 0.16);
+    --success: #8fbb8f;
+    --success-bg: rgba(143, 187, 143, 0.12);
+    --danger: #e07a5f;
+    --danger-bg: rgba(224, 122, 95, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* keep content clear of the iOS status bar / home indicator when installed standalone */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-weight: 650;
+  text-wrap: balance;
+  margin: 0;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+a {
+  color: var(--accent-strong);
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
