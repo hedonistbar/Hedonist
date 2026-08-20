@@ -606,6 +606,59 @@ input.urgency-overdue {
   min-width: 120px;
 }
 
+/* ---------------------------------------------------------------------- */
+/* Flat "Список" view — the reference design's Home screen (grouped by due
+   date instead of columns), offered as a toggle alongside the kanban
+   board rather than replacing it. */
+/* ---------------------------------------------------------------------- */
+.task-list-view {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 18px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 16px 0 2px;
+}
+.task-section-label:first-child {
+  margin-top: 0;
+}
+.task-section-label.danger {
+  color: var(--overdue);
+}
+.task-row-list-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.task-completed-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 2px;
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.task-completed-chevron {
+  display: inline-block;
+  font-size: 16px;
+  transition: transform 0.15s ease;
+}
+.task-completed-chevron.open {
+  transform: rotate(180deg);
+}
+
 .new-list-form {
   flex: 0 0 268px;
 }
