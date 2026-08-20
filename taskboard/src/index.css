@@ -1,22 +1,25 @@
 :root {
-  --ground: #f2f2f7;
+  /* Design tokens taken verbatim from the Ivchenko HUB design handoff
+     (buildModes().light) — deep indigo accent on a warm off-white, not
+     the iOS-blue/cool-gray system this app started on. */
+  --ground: #f5f3ef;
   --surface: #ffffff;
   --surface-rgb: 255, 255, 255;
-  --surface-2: #f2f2f7;
-  --border: rgba(60, 60, 67, 0.13);
-  --text: #1c1c1e;
-  --text-muted: #8e8e93;
-  --accent: #007aff;
-  --accent-strong: #0062cc;
-  --accent-soft: rgba(0, 122, 255, 0.12);
-  --success: #34c759;
-  --success-bg: rgba(52, 199, 89, 0.12);
-  --danger: #ff3b30;
-  --danger-bg: rgba(255, 59, 48, 0.12);
-  --warning: #b25000;
-  --warning-bg: rgba(255, 204, 0, 0.18);
-  --overdue: #ff3b30;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px -12px rgba(0, 0, 0, 0.18);
+  --surface-2: #efece5;
+  --border: rgba(27, 27, 34, 0.07);
+  --text: #1b1b22;
+  --text-muted: rgba(27, 27, 34, 0.55);
+  --accent: #3a3f72;
+  --accent-strong: color-mix(in oklch, #3a3f72, black 15%);
+  --accent-soft: color-mix(in oklch, #3a3f72, white 88%);
+  --success: oklch(50% 0.1 155);
+  --success-bg: color-mix(in oklch, oklch(50% 0.1 155), white 88%);
+  --danger: oklch(54% 0.16 25);
+  --danger-bg: oklch(93% 0.045 25);
+  --warning: oklch(60% 0.13 65);
+  --warning-bg: oklch(94% 0.05 80);
+  --overdue: oklch(54% 0.16 25);
+  --shadow: 0 1px 2px rgba(20, 20, 30, 0.05), 0 10px 30px -12px rgba(20, 20, 30, 0.18);
   /* Liquid-glass edge: a hairline highlight along the top of translucent
      surfaces, the way light catches the rim of a glass material. */
   --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -38,23 +41,24 @@
    dark system. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground: #000000;
-    --surface: #1c1c1e;
-    --surface-rgb: 28, 28, 30;
-    --surface-2: #2c2c2e;
-    --border: rgba(255, 255, 255, 0.12);
-    --text: #f2f2f7;
-    --text-muted: #8e8e93;
-    --accent: #0a84ff;
-    --accent-strong: #409cff;
-    --accent-soft: rgba(10, 132, 255, 0.18);
-    --success: #30d158;
-    --success-bg: rgba(48, 209, 88, 0.16);
-    --danger: #ff453a;
-    --danger-bg: rgba(255, 69, 58, 0.16);
-    --warning: #ffd60a;
-    --warning-bg: rgba(255, 214, 10, 0.16);
-    --overdue: #ff453a;
+    /* buildModes().dark from the same handoff. */
+    --ground: #1a1a1e;
+    --surface: #242428;
+    --surface-rgb: 36, 36, 40;
+    --surface-2: #2e2e33;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #f4f3f1;
+    --text-muted: rgba(244, 243, 241, 0.6);
+    --accent: oklch(74% 0.11 275);
+    --accent-strong: color-mix(in oklch, oklch(74% 0.11 275), white 15%);
+    --accent-soft: color-mix(in oklch, oklch(74% 0.11 275) 20%, transparent);
+    --success: oklch(65% 0.12 155);
+    --success-bg: oklch(30% 0.05 155);
+    --danger: oklch(68% 0.16 25);
+    --danger-bg: oklch(32% 0.06 25);
+    --warning: oklch(75% 0.12 70);
+    --warning-bg: oklch(34% 0.05 75);
+    --overdue: oklch(68% 0.16 25);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
     --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
     --blob-1: oklch(42% 0.14 275);
@@ -68,23 +72,23 @@
 /* An explicit in-app choice — the toggle in the header — always wins,
    regardless of the OS setting. */
 :root[data-theme="dark"] {
-  --ground: #000000;
-  --surface: #1c1c1e;
-  --surface-rgb: 28, 28, 30;
-  --surface-2: #2c2c2e;
-  --border: rgba(255, 255, 255, 0.12);
-  --text: #f2f2f7;
-  --text-muted: #8e8e93;
-  --accent: #0a84ff;
-  --accent-strong: #409cff;
-  --accent-soft: rgba(10, 132, 255, 0.18);
-  --success: #30d158;
-  --success-bg: rgba(48, 209, 88, 0.16);
-  --danger: #ff453a;
-  --danger-bg: rgba(255, 69, 58, 0.16);
-  --warning: #ffd60a;
-  --warning-bg: rgba(255, 214, 10, 0.16);
-  --overdue: #ff453a;
+  --ground: #1a1a1e;
+  --surface: #242428;
+  --surface-rgb: 36, 36, 40;
+  --surface-2: #2e2e33;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f4f3f1;
+  --text-muted: rgba(244, 243, 241, 0.6);
+  --accent: oklch(74% 0.11 275);
+  --accent-strong: color-mix(in oklch, oklch(74% 0.11 275), white 15%);
+  --accent-soft: color-mix(in oklch, oklch(74% 0.11 275) 20%, transparent);
+  --success: oklch(65% 0.12 155);
+  --success-bg: oklch(30% 0.05 155);
+  --danger: oklch(68% 0.16 25);
+  --danger-bg: oklch(32% 0.06 25);
+  --warning: oklch(75% 0.12 70);
+  --warning-bg: oklch(34% 0.05 75);
+  --overdue: oklch(68% 0.16 25);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
   --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
   --blob-1: oklch(42% 0.14 275);
