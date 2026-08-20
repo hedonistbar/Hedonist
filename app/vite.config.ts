@@ -13,6 +13,13 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["icons/apple-touch-icon.png"],
+      workbox: {
+        // This SW's scope is the whole /Hedonist/ site root, which would
+        // otherwise make its SPA navigation fallback swallow requests to
+        // /Hedonist/taskboard/ — a separate app hosted alongside this one on
+        // the same GitHub Pages site — and serve app's own shell there instead.
+        navigateFallbackDenylist: [/^\/Hedonist\/taskboard\//],
+      },
       manifest: {
         name: "Hedonist AI-маркетолог",
         short_name: "Hedonist",
