@@ -6,8 +6,10 @@
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
   background: rgba(var(--surface-rgb), 0.72);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  /* A large blur radius is the dominant cost of backdrop-filter on mobile
+     Safari — sticky + always visible, so keep this one cheap. */
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
   box-shadow: var(--glass-edge);
   position: sticky;
   top: 0;
@@ -341,9 +343,12 @@ select {
 
 .list-column {
   flex: 0 0 268px;
-  background: rgba(var(--surface-rgb), 0.86);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Several of these can be on screen at once, each its own blurred layer —
+     the multiplying cost on mobile. Higher opacity + smaller radius keeps
+     the glass look without the GPU load of blurring N wide surfaces. */
+  background: rgba(var(--surface-rgb), 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 12px;
