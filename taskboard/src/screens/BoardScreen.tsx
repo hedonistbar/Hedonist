@@ -1,6 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "../lib/supabase";
-import { dropIndexFromPointer, dropIndexFromPointerX } from "../lib/reorder";
 import { dueUrgency } from "../lib/dueUrgency";
 import { backgroundCss } from "../lib/backgrounds";
 import { initials } from "../lib/initials";
@@ -14,6 +34,137 @@ type Progress = { done: number; total: number };
 function formatDueDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function CardFace({
+  card,
+  progress,
+  attachCount,
+  assignee,
+  onOpen,
+}: {
+  card: Card;
+  progress: Progress | undefined;
+  attachCount: number;
+  assignee: BoardMember | null;
+  onOpen: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card.id,
+    data: { type: "card", listId: card.list_id },
+  });
+  const urgency = dueUrgency(card.due_date, card.is_done);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      className={`card-face${card.is_done ? " done" : ""}`}
+      onClick={onOpen}
+      {...attributes}
+      {...listeners}
+    >
+      <div className="card-face-top">
+        <span className="card-face-title">{card.title}</span>
+        {assignee && (
+          <span className="avatar" title={assignee.display_name ?? undefined}>
+            {initials(assignee.display_name)}
+          </span>
+        )}
+      </div>
+      {(card.due_date || progress || attachCount > 0) && (
+        <div className="card-face-meta">
+          {card.due_date && (
+            <span className={`badge${urgency ? ` urgency-${urgency}` : ""}`}>🕐 {formatDueDate(card.due_date)}</span>
+          )}
+          {progress && (
+            <span className="badge">
+              ☑ {progress.done}/{progress.total}
+            </span>
+          )}
+          {attachCount > 0 && <span className="badge">📎 {attachCount}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ListColumn({
+  list,
+  cardIds,
+  children,
+  onDelete,
+  addingCard,
+  onStartAddCard,
+  onCancelAddCard,
+  newCardTitle,
+  onNewCardTitleChange,
+  onSubmitCard,
+}: {
+  list: List;
+  cardIds: string[];
+  children: React.ReactNode;
+  onDelete: () => void;
+  addingCard: boolean;
+  onStartAddCard: () => void;
+  onCancelAddCard: () => void;
+  newCardTitle: string;
+  onNewCardTitleChange: (v: string) => void;
+  onSubmitCard: (e: FormEvent) => void;
+}) {
+  const sortable = useSortable({ id: list.id, data: { type: "list" } });
+  const droppable = useDroppable({ id: `cards-${list.id}`, data: { type: "list-container", listId: list.id } });
+  const style = {
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition,
+    opacity: sortable.isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={sortable.setNodeRef} style={style} className="list-column">
+      <div className="list-header" {...sortable.attributes} {...sortable.listeners}>
+        <span className="list-title">{list.title}</span>
+        <button
+          className="link-btn"
+          style={{ padding: 0 }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onDelete}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="list-cards" ref={droppable.setNodeRef}>
+        <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+          {children}
+        </SortableContext>
+      </div>
+
+      {addingCard ? (
+        <form className="inline-form" onSubmit={onSubmitCard}>
+          <input
+            autoFocus
+            placeholder="Название карточки…"
+            value={newCardTitle}
+            onChange={(e) => onNewCardTitleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") onCancelAddCard();
+            }}
+          />
+          <button className="btn btn-primary" type="submit" disabled={!newCardTitle.trim()}>
+            Добавить
+          </button>
+          <button type="button" className="link-btn" onClick={onCancelAddCard}>
+            Отмена
+          </button>
+        </form>
+      ) : (
+        <button className="link-btn add-card-btn" onClick={onStartAddCard}>
+          + Добавить карточку
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function BoardScreen({
@@ -40,11 +191,13 @@ export function BoardScreen({
   const [newListTitle, setNewListTitle] = useState("");
   const [addingCardToList, setAddingCardToList] = useState<string | null>(null);
   const [newCardTitle, setNewCardTitle] = useState("");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<"card" | "list" | null>(null);
 
-  const dragCard = useRef<{ id: string; fromListId: string } | null>(null);
-  const dragList = useRef<string | null>(null);
-  const listRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const listsRowRef = useRef<HTMLDivElement | null>(null);
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  );
 
   const load = useCallback(async () => {
     const [boardRes, listsRes, cardsRes, checklistRes, attachmentsRes, membersRes] = await Promise.all([
@@ -133,6 +286,10 @@ export function BoardScreen({
     return map;
   }, [checklistItems]);
 
+  const memberById = new Map(members.map((m) => [m.user_id, m]));
+  const activeCard = activeType === "card" ? cards.find((c) => c.id === activeId) : null;
+  const activeList = activeType === "list" ? lists.find((l) => l.id === activeId) : null;
+
   async function addList(e: FormEvent) {
     e.preventDefault();
     const title = newListTitle.trim();
@@ -164,27 +321,72 @@ export function BoardScreen({
     load();
   }
 
-  async function persistCardDrop(targetListId: string, dropIndexRaw: number) {
-    const drag = dragCard.current;
-    dragCard.current = null;
-    if (!drag) return;
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string);
+    setActiveType((event.active.data.current?.type as "card" | "list") ?? null);
+  }
 
-    const draggedCard = cards.find((c) => c.id === drag.id);
-    if (!draggedCard) return;
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (!over || active.data.current?.type !== "card") return;
 
-    const originalTargetList = cardsByList[targetListId] ?? [];
-    // dropIndexRaw was computed against the DOM, which still includes the
-    // dragged card at its original spot. If it's leaving from earlier in
-    // this same list, everything after it shifts left by one once removed.
-    let dropIndex = dropIndexRaw;
-    if (drag.fromListId === targetListId) {
-      const originalIndex = originalTargetList.findIndex((c) => c.id === drag.id);
-      if (originalIndex !== -1 && originalIndex < dropIndex) dropIndex -= 1;
+    const activeCardId = active.id as string;
+    const activeCard = cards.find((c) => c.id === activeCardId);
+    if (!activeCard) return;
+
+    let overListId: string | undefined;
+    const overData = over.data.current;
+    if (overData?.type === "card") {
+      overListId = cards.find((c) => c.id === over.id)?.list_id;
+    } else if (overData?.type === "list-container") {
+      overListId = overData.listId as string;
+    } else if (overData?.type === "list") {
+      // Dropped on a list's own header/reorder zone rather than its cards
+      // area or a card within it — still counts as "into this list".
+      overListId = over.id as string;
+    }
+    if (!overListId || overListId === activeCard.list_id) return;
+
+    setCards((prev) => prev.map((c) => (c.id === activeCardId ? { ...c, list_id: overListId! } : c)));
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveId(null);
+    setActiveType(null);
+    if (!over) return;
+
+    if (active.data.current?.type === "list") {
+      if (active.id === over.id) return;
+      const oldIndex = lists.findIndex((l) => l.id === active.id);
+      const newIndex = lists.findIndex((l) => l.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const reordered = arrayMove(lists, oldIndex, newIndex);
+      setLists(reordered);
+      await Promise.all(
+        reordered.map((l, idx) => supabase.from("lists").update({ position: idx }).eq("id", l.id)),
+      );
+      return;
     }
 
-    const targetCards = originalTargetList.filter((c) => c.id !== drag.id);
-    targetCards.splice(dropIndex, 0, draggedCard);
-    const orderedIds = targetCards.map((c) => c.id);
+    const activeCardId = active.id as string;
+    const activeCard = cards.find((c) => c.id === activeCardId);
+    if (!activeCard) return;
+    const targetListId = activeCard.list_id;
+
+    let overCardId: string | null = null;
+    const overData = over.data.current;
+    if (overData?.type === "card" && over.id !== activeCardId) {
+      overCardId = over.id as string;
+    }
+
+    const listCardIds = (cardsByList[targetListId] ?? []).map((c) => c.id);
+    let orderedIds = listCardIds.includes(activeCardId) ? listCardIds : [...listCardIds, activeCardId];
+    if (overCardId) {
+      const oldIdx = orderedIds.indexOf(activeCardId);
+      const newIdx = orderedIds.indexOf(overCardId);
+      if (oldIdx !== -1 && newIdx !== -1) orderedIds = arrayMove(orderedIds, oldIdx, newIdx);
+    }
 
     setCards((prev) =>
       prev.map((c) => {
@@ -198,41 +400,14 @@ export function BoardScreen({
       orderedIds.map((id, idx) =>
         supabase
           .from("cards")
-          .update(id === drag.id ? { list_id: targetListId, position: idx } : { position: idx })
+          .update(id === activeCardId ? { list_id: targetListId, position: idx } : { position: idx })
           .eq("id", id),
       ),
     );
   }
 
-  async function persistListDrop(dropIndexRaw: number) {
-    const draggedId = dragList.current;
-    dragList.current = null;
-    if (!draggedId) return;
-
-    // Same DOM-includes-the-dragged-element adjustment as persistCardDrop.
-    const originalIndex = lists.findIndex((l) => l.id === draggedId);
-    const dropIndex = originalIndex !== -1 && originalIndex < dropIndexRaw ? dropIndexRaw - 1 : dropIndexRaw;
-
-    const remaining = lists.filter((l) => l.id !== draggedId);
-    const dragged = lists.find((l) => l.id === draggedId)!;
-    remaining.splice(dropIndex, 0, dragged);
-    const orderedIds = remaining.map((l) => l.id);
-
-    setLists((prev) =>
-      prev.map((l) => {
-        const idx = orderedIds.indexOf(l.id);
-        return idx === -1 ? l : { ...l, position: idx };
-      }),
-    );
-
-    await Promise.all(
-      orderedIds.map((id, idx) => supabase.from("lists").update({ position: idx }).eq("id", id)),
-    );
-  }
-
   if (loading) return <div className="spinner-screen">Загрузка…</div>;
 
-  const memberById = new Map(members.map((m) => [m.user_id, m]));
   const bg = backgroundCss(boardBackground);
 
   return (
@@ -254,136 +429,78 @@ export function BoardScreen({
 
       {error && <div className="error-text" style={{ margin: "8px 16px" }}>{error}</div>}
 
-      <div className="lists-row" ref={listsRowRef}>
-        {lists.map((list) => (
-          <div
-            key={list.id}
-            className="list-column"
-            ref={(el) => {
-              listRefs.current[list.id] = el;
-            }}
-            draggable
-            onDragStart={(e) => {
-              dragList.current = list.id;
-              e.dataTransfer.effectAllowed = "move";
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (dragCard.current) {
-                const idx = dropIndexFromPointer(listRefs.current[list.id]!, ".card-face", e.clientY);
-                persistCardDrop(list.id, idx);
-              } else if (dragList.current && listsRowRef.current) {
-                const idx = dropIndexFromPointerX(listsRowRef.current, ".list-column", e.clientX);
-                persistListDrop(idx);
-              }
-            }}
-          >
-            <div className="list-header">
-              <span className="list-title">{list.title}</span>
-              <button className="link-btn" style={{ padding: 0 }} onClick={() => deleteList(list)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="list-cards">
-              {(cardsByList[list.id] ?? []).map((card) => {
-                const progress = progressByCard[card.id];
-                const attachCount = attachmentCounts[card.id] ?? 0;
-                const urgency = dueUrgency(card.due_date, card.is_done);
-                const assignee = card.assigned_to ? memberById.get(card.assigned_to) : null;
-                return (
-                  <div
-                    key={card.id}
-                    className={`card-face${card.is_done ? " done" : ""}`}
-                    draggable
-                    onDragStart={(e) => {
-                      dragCard.current = { id: card.id, fromListId: list.id };
-                      e.dataTransfer.effectAllowed = "move";
-                    }}
-                    onClick={() => setSelectedCard(card)}
-                  >
-                    <div className="card-face-top">
-                      <span className="card-face-title">{card.title}</span>
-                      {assignee && (
-                        <span className="avatar" title={assignee.display_name ?? undefined}>
-                          {initials(assignee.display_name)}
-                        </span>
-                      )}
-                    </div>
-                    {(card.due_date || progress || attachCount > 0) && (
-                      <div className="card-face-meta">
-                        {card.due_date && (
-                          <span className={`badge${urgency ? ` urgency-${urgency}` : ""}`}>
-                            🕐 {formatDueDate(card.due_date)}
-                          </span>
-                        )}
-                        {progress && (
-                          <span className="badge">
-                            ☑ {progress.done}/{progress.total}
-                          </span>
-                        )}
-                        {attachCount > 0 && <span className="badge">📎 {attachCount}</span>}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {addingCardToList === list.id ? (
-              <form className="inline-form" onSubmit={(e) => addCard(list.id, e)}>
-                <input
-                  autoFocus
-                  placeholder="Название карточки…"
-                  value={newCardTitle}
-                  onChange={(e) => setNewCardTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setAddingCardToList(null);
-                  }}
-                />
-                <button className="btn btn-primary" type="submit" disabled={!newCardTitle.trim()}>
-                  Добавить
-                </button>
-                <button
-                  type="button"
-                  className="link-btn"
-                  onClick={() => {
-                    setAddingCardToList(null);
-                    setNewCardTitle("");
-                  }}
-                >
-                  Отмена
-                </button>
-              </form>
-            ) : (
-              <button
-                className="link-btn add-card-btn"
-                onClick={() => {
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="lists-row">
+          <SortableContext items={lists.map((l) => l.id)} strategy={horizontalListSortingStrategy}>
+            {lists.map((list) => (
+              <ListColumn
+                key={list.id}
+                list={list}
+                cardIds={(cardsByList[list.id] ?? []).map((c) => c.id)}
+                onDelete={() => deleteList(list)}
+                addingCard={addingCardToList === list.id}
+                onStartAddCard={() => {
                   setAddingCardToList(list.id);
                   setNewCardTitle("");
                 }}
+                onCancelAddCard={() => {
+                  setAddingCardToList(null);
+                  setNewCardTitle("");
+                }}
+                newCardTitle={newCardTitle}
+                onNewCardTitleChange={setNewCardTitle}
+                onSubmitCard={(e) => addCard(list.id, e)}
               >
-                + Добавить карточку
+                {(cardsByList[list.id] ?? []).map((card) => (
+                  <CardFace
+                    key={card.id}
+                    card={card}
+                    progress={progressByCard[card.id]}
+                    attachCount={attachmentCounts[card.id] ?? 0}
+                    assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
+                    onOpen={() => setSelectedCard(card)}
+                  />
+                ))}
+              </ListColumn>
+            ))}
+          </SortableContext>
+
+          <form className="new-list-form" onSubmit={addList}>
+            <input
+              placeholder="+ Добавить список…"
+              value={newListTitle}
+              onChange={(e) => setNewListTitle(e.target.value)}
+            />
+            {newListTitle.trim() && (
+              <button className="btn btn-primary" type="submit">
+                Добавить
               </button>
             )}
-          </div>
-        ))}
+          </form>
+        </div>
 
-        <form className="new-list-form" onSubmit={addList}>
-          <input
-            placeholder="+ Добавить список…"
-            value={newListTitle}
-            onChange={(e) => setNewListTitle(e.target.value)}
-          />
-          {newListTitle.trim() && (
-            <button className="btn btn-primary" type="submit">
-              Добавить
-            </button>
-          )}
-        </form>
-      </div>
+        <DragOverlay>
+          {activeCard ? (
+            <div className="card-face drag-overlay">
+              <div className="card-face-top">
+                <span className="card-face-title">{activeCard.title}</span>
+              </div>
+            </div>
+          ) : activeList ? (
+            <div className="list-column drag-overlay">
+              <div className="list-header">
+                <span className="list-title">{activeList.title}</span>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {selectedCard && (
         <CardModal
