@@ -17,6 +17,28 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
     />
     <title>Taskboard</title>
+    <script>
+      // If the app fails to start (script load failure, a runtime error
+      // during the first render, etc.) there is no console on a phone to see
+      // why — show it directly on screen instead of a silent blank page.
+      (function () {
+        function show(label, detail) {
+          var pre = document.createElement("pre");
+          pre.style.cssText =
+            "position:fixed;inset:0;margin:0;padding:16px;overflow:auto;z-index:99999;" +
+            "background:#a83f2c;color:#fff8ee;font:12px/1.5 monospace;white-space:pre-wrap;";
+          pre.textContent = label + "\n\n" + detail;
+          document.body.appendChild(pre);
+        }
+        window.addEventListener("error", function (e) {
+          show("Ошибка: " + (e.message || "unknown"), (e.error && e.error.stack) || e.filename + ":" + e.lineno);
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var r = e.reason;
+          show("Необработанная ошибка промиса:", (r && (r.stack || r.message)) || String(r));
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
