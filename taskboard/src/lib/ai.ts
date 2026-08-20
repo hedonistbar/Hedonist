@@ -16,9 +16,12 @@ export async function sendAiMessage(cardId: string, message: string): Promise<Ai
     body: { card_id: cardId, message },
   });
   if (error) {
-    // supabase-js only exposes the parsed body on FunctionsHttpError.context
-    const context = (error as { context?: Response }).context;
-    const body = context ? await context.json().catch(() => null) : null;
+    // supabase-js only exposes a parseable body on FunctionsHttpError, whose
+    // context is a Response — a network-level failure (FunctionsFetchError)
+    // carries a plain Error as context instead, with no .json() to call.
+    const context = (error as { context?: unknown }).context;
+    const body =
+      context instanceof Response ? await context.json().catch(() => null) : null;
     throw new Error(body?.error ?? error.message);
   }
   if (data?.error) throw new Error(data.error);
