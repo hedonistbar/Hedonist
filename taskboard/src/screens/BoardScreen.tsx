@@ -24,6 +24,7 @@ import { supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
 import { backgroundCss, getBoardBackgroundImageUrl } from "../lib/backgrounds";
 import { initials } from "../lib/initials";
+import { useIsMobile } from "../lib/useIsMobile";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
 import { BackgroundModal } from "../components/BackgroundModal";
@@ -315,8 +316,13 @@ export function BoardScreen({
   const [newCardTitle, setNewCardTitle] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<"card" | "list" | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("board");
   const [showCompletedList, setShowCompletedList] = useState(false);
+  // Touch devices get the flat, tap-friendly "Список" view — dragging cards
+  // between columns is fiddly on a phone. Desktop keeps the kanban board
+  // with drag & drop, where there's room for columns and a mouse to drag
+  // with. Not a manual toggle: it follows the viewport.
+  const isMobile = useIsMobile();
+  const viewMode: ViewMode = isMobile ? "list" : "board";
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -576,13 +582,6 @@ export function BoardScreen({
         <h1 style={{ fontSize: 18 }}>{boardName}</h1>
         <div style={{ display: "flex", gap: 8 }}>
           <ThemeToggle />
-          <button
-            className="icon-btn"
-            onClick={() => setViewMode(viewMode === "board" ? "list" : "board")}
-            title={viewMode === "board" ? "Показать списком" : "Показать доской"}
-          >
-            {viewMode === "board" ? "🗒 Список" : "📋 Доска"}
-          </button>
           <button className="icon-btn" onClick={() => setShowBackground(true)}>
             Фон
           </button>
