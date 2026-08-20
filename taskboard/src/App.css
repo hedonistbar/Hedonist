@@ -20,10 +20,23 @@
   gap: 2px;
 }
 
-.topbar .brand .eyebrow {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.wordmark-hub {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.wordmark-ivchenko {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-muted);
 }

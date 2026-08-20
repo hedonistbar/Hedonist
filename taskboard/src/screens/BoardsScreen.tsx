@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
 import { AISettingsModal } from "../components/AISettingsModal";
+import { Logo } from "../components/Logo";
 import { ThemeToggle } from "../components/ThemeToggle";
 import type { Board } from "../lib/database.types";
 
@@ -66,7 +67,7 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
     <div className="boards-screen">
       <div className="topbar">
         <div className="brand">
-          <span className="eyebrow">IVCHENKO HUB</span>
+          <Logo />
           <h1>Мои доски</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
