@@ -623,6 +623,82 @@ input.urgency-overdue {
   border-bottom: none;
 }
 
+.ai-toggle-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.ai-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+.ai-panel label {
+  margin-bottom: 4px;
+}
+.ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.ai-empty {
+  margin: 4px 0;
+}
+.ai-bubble {
+  border-radius: 14px;
+  padding: 9px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 92%;
+  white-space: pre-wrap;
+}
+.ai-bubble-user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.ai-bubble-assistant {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.ai-thinking {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.ai-bubble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.ai-bubble-actions .link-btn {
+  padding: 2px 0;
+  font-size: 12.5px;
+}
+.ai-quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-quick-prompt {
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.ai-quick-prompt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ---------------------------------------------------------------------- */
 /* iPhone / narrow viewports — one list fills the screen, swipe between
    them (scroll-snap, native paging feel) instead of a cramped multi-column

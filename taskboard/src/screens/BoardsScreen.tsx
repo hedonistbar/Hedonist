@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
+import { AISettingsModal } from "../components/AISettingsModal";
 import type { Board } from "../lib/database.types";
 
 export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => void }) {
@@ -11,6 +12,7 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
   const [creating, setCreating] = useState(false);
   const [pushStatus, setPushStatus] = useState<PushStatus>("unsubscribed");
   const [pushBusy, setPushBusy] = useState(false);
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (isPushSupported()) getPushStatus().then(setPushStatus);
@@ -73,11 +75,16 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
             </button>
           )}
           {pushStatus === "subscribed" && <span className="pill member">🔔 уведомления вкл.</span>}
+          <button className="icon-btn" onClick={() => setAiSettingsOpen(true)}>
+            ✨ ИИ
+          </button>
           <button className="icon-btn" onClick={() => supabase.auth.signOut()}>
             Выйти
           </button>
         </div>
       </div>
+
+      {aiSettingsOpen && <AISettingsModal onClose={() => setAiSettingsOpen(false)} />}
 
       <main className="content">
         <form className="new-board-form" onSubmit={createBoard}>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ATTACHMENTS_BUCKET, supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
 import { notifyCardAssigned } from "../lib/push";
+import { CardAIPanel } from "./CardAIPanel";
 import type { Attachment, BoardMember, Card, ChecklistItem } from "../lib/database.types";
 
 function toDatetimeLocal(iso: string | null): string {
@@ -153,6 +154,11 @@ export function CardModal({
     if (userId) notifyCardAssigned(card.id);
   }
 
+  async function applyAiDescription(text: string) {
+    setDescription(text);
+    await saveField({ description: text });
+  }
+
   const doneCount = checklist.filter((i) => i.is_done).length;
   const urgency = dueUrgency(card.due_date, isDone);
 
@@ -213,6 +219,17 @@ export function CardModal({
             onBlur={() => description !== (card.description ?? "") && saveField({ description: description || null })}
           />
         </div>
+
+        <CardAIPanel
+          cardId={card.id}
+          boardId={card.board_id}
+          checklistLength={checklist.length}
+          onChecklistAdded={() => {
+            loadChecklist();
+            loadAttachments();
+          }}
+          onDescriptionReplaced={applyAiDescription}
+        />
 
         <div className="field">
           <label>

@@ -65,3 +65,15 @@ export type Attachment = {
   uploaded_by: string | null;
   created_at: string;
 };
+
+export type AiMessageRole = "user" | "assistant";
+
+export type AiMessage = {
+  id: string;
+  board_id: string;
+  card_id: string;
+  role: AiMessageRole;
+  content: string;
+  created_by: string | null;
+  created_at: string;
+};
