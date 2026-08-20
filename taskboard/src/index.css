@@ -22,6 +22,15 @@
   --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --radius: 14px;
   --radius-lg: 20px;
+  /* Animated backdrop blobs — an Apple dynamic-wallpaper-style ambient
+     layer behind the app chrome. Boards with their own custom background
+     (mesh/photo/flat) paint over this, so it only shows on the boards list
+     and on boards left at "default". */
+  --blob-1: oklch(84% 0.06 275);
+  --blob-2: oklch(88% 0.07 45);
+  --blob-3: oklch(89% 0.05 170);
+  --blob-opacity: 0.55;
+  --blob-blend: normal;
 }
 
 /* Follows the OS when the person hasn't picked a theme in the app.
@@ -48,6 +57,11 @@
     --overdue: #ff453a;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
     --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --blob-1: oklch(42% 0.14 275);
+    --blob-2: oklch(38% 0.13 320);
+    --blob-3: oklch(40% 0.11 200);
+    --blob-opacity: 0.65;
+    --blob-blend: screen;
   }
 }
 
@@ -73,6 +87,11 @@
   --overdue: #ff453a;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
   --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --blob-1: oklch(42% 0.14 275);
+  --blob-2: oklch(38% 0.13 320);
+  --blob-3: oklch(40% 0.11 200);
+  --blob-opacity: 0.65;
+  --blob-blend: screen;
 }
 
 * {
