@@ -27,6 +27,7 @@ import { initials } from "../lib/initials";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
 import { BackgroundModal } from "../components/BackgroundModal";
+import { ThemeToggle } from "../components/ThemeToggle";
 import type { Board, BoardMember, Card, ChecklistItem, List } from "../lib/database.types";
 
 type Progress = { done: number; total: number };
@@ -418,6 +419,7 @@ export function BoardScreen({
         </button>
         <h1 style={{ fontSize: 18 }}>{boardName}</h1>
         <div style={{ display: "flex", gap: 8 }}>
+          <ThemeToggle />
           <button className="icon-btn" onClick={() => setShowBackground(true)}>
             Фон
           </button>

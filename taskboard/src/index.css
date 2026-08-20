@@ -17,12 +17,18 @@
   --warning-bg: rgba(255, 204, 0, 0.18);
   --overdue: #ff3b30;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px -12px rgba(0, 0, 0, 0.18);
+  /* Liquid-glass edge: a hairline highlight along the top of translucent
+     surfaces, the way light catches the rim of a glass material. */
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --radius: 14px;
   --radius-lg: 20px;
 }
 
+/* Follows the OS when the person hasn't picked a theme in the app.
+   :not([data-theme="light"]) lets an explicit light choice win even on a
+   dark system. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #000000;
     --surface: #1c1c1e;
     --surface-rgb: 28, 28, 30;
@@ -41,7 +47,32 @@
     --warning-bg: rgba(255, 214, 10, 0.16);
     --overdue: #ff453a;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+    --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
+}
+
+/* An explicit in-app choice — the toggle in the header — always wins,
+   regardless of the OS setting. */
+:root[data-theme="dark"] {
+  --ground: #000000;
+  --surface: #1c1c1e;
+  --surface-rgb: 28, 28, 30;
+  --surface-2: #2c2c2e;
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #f2f2f7;
+  --text-muted: #8e8e93;
+  --accent: #0a84ff;
+  --accent-strong: #409cff;
+  --accent-soft: rgba(10, 132, 255, 0.18);
+  --success: #30d158;
+  --success-bg: rgba(48, 209, 88, 0.16);
+  --danger: #ff453a;
+  --danger-bg: rgba(255, 69, 58, 0.16);
+  --warning: #ffd60a;
+  --warning-bg: rgba(255, 214, 10, 0.16);
+  --overdue: #ff453a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 * {

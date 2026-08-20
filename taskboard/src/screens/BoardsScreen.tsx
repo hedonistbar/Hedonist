@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
 import { AISettingsModal } from "../components/AISettingsModal";
+import { ThemeToggle } from "../components/ThemeToggle";
 import type { Board } from "../lib/database.types";
 
 export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => void }) {
@@ -75,6 +76,7 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
             </button>
           )}
           {pushStatus === "subscribed" && <span className="pill member">🔔 уведомления вкл.</span>}
+          <ThemeToggle />
           <button className="icon-btn" onClick={() => setAiSettingsOpen(true)}>
             ✨ ИИ
           </button>
