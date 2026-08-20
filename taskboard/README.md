@@ -21,16 +21,17 @@ Supabase-база, свой набор таблиц, ничего общего �
 - Устанавливается как PWA на телефон/десктоп (иконка на главном экране,
   работает в отдельном окне).
 
-## Настройка (один раз)
+## Настройка
 
-1. Создайте бесплатный проект на [supabase.com](https://supabase.com).
-2. В SQL Editor выполните `migrations/0001_init.sql` целиком.
-3. В Authentication → Providers убедитесь, что Email включён (по умолчанию
-   так и есть).
-4. Скопируйте `.env.example` в `.env` и заполните `VITE_SUPABASE_URL` /
-   `VITE_SUPABASE_PUBLISHABLE_KEY` из Project Settings → API (значения
-   "Project URL" и "anon public" / "publishable" key — их безопасно
-   встраивать в клиентский код, доступ ограничен через RLS).
+Уже настроено — есть готовый Supabase-проект (`taskboard`, регион
+eu-central-1), миграция применена, RLS и права проверены через security
+advisor. Ничего создавать не нужно, можно сразу запускать.
+
+Если захотите пересадить приложение на свой собственный Supabase-проект:
+создайте его на [supabase.com](https://supabase.com), выполните
+`migrations/0001_init.sql` целиком в SQL Editor, затем скопируйте
+`.env.example` в `.env` и заполните `VITE_SUPABASE_URL` /
+`VITE_SUPABASE_PUBLISHABLE_KEY` из Project Settings → API.
 
 ## Запуск локально
 
@@ -58,15 +59,11 @@ workflow параллельно собирает и `app/` (Hedonist AI-marketer
 в один сайт (`app/` — корень, `taskboard/` — подпуть `/taskboard/`), потому
 что GitHub Pages отдаёт один артефакт на весь репозиторий.
 
-Чтобы деплой на Pages подхватил ваш Supabase-проект, добавьте в репозитории
-secrets (Settings → Secrets and variables → Actions):
-
-- `TASKBOARD_SUPABASE_URL`
-- `TASKBOARD_SUPABASE_PUBLISHABLE_KEY`
-
-Без них собранная на Pages версия задеплоится, но откроется с ошибкой —
-задать переменные можно в любой момент, доступно только через `.env` для
-локального запуска.
+Ключи Supabase уже встроены как значение по умолчанию (см. «Настройка»
+выше), так что деплой работает без каких-либо secrets. Опционально — если
+подключите свой Supabase-проект — можно передать его через repo secrets
+`TASKBOARD_SUPABASE_URL` / `TASKBOARD_SUPABASE_PUBLISHABLE_KEY`, они
+переопределят значения по умолчанию только при сборке на Pages.
 
 ## Структура
 
