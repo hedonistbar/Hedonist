@@ -13,7 +13,8 @@ begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = public;
 
 -- ---------------------------------------------------------------------------
 -- boards
@@ -258,3 +259,15 @@ create policy attachments_storage_all_members on storage.objects
   for all
   using (bucket_id = 'attachments' and is_board_member(((storage.foldername(name))[1])::uuid))
   with check (bucket_id = 'attachments' and is_board_member(((storage.foldername(name))[1])::uuid));
+
+-- ---------------------------------------------------------------------------
+-- create_board/share_board_by_email are meaningless for anon (create_board
+-- would violate boards.owner_id's not-null constraint; share_board_by_email's
+-- is_board_owner() check is always false for a signed-out caller) — Postgres
+-- grants EXECUTE to PUBLIC by default, which anon inherits, so revoke from
+-- PUBLIC explicitly and re-grant only to authenticated.
+-- ---------------------------------------------------------------------------
+revoke execute on function create_board(text) from public;
+revoke execute on function share_board_by_email(uuid, text) from public;
+grant execute on function create_board(text) to authenticated;
+grant execute on function share_board_by_email(uuid, text) to authenticated;
