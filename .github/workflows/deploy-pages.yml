@@ -1,0 +1,81 @@
+name: Deploy to GitHub Pages
+
+# GitHub Pages serves one artifact per deploy for the whole repo, so the two
+# PWAs (app/ = Hedonist AI-marketer, taskboard/ = personal task manager)
+# can't have independent deploy workflows without clobbering each other on
+# every push. This single workflow builds both and merges them into one
+# artifact: app/ at the site root, taskboard/ under /taskboard/.
+on:
+  push:
+    branches: [main, claude/new-session-25ghuh, claude/trello-like-task-app-sdlxis]
+    paths:
+      - "app/**"
+      - "taskboard/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            taskboard/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+      - name: Build app
+        working-directory: app
+        env:
+          GITHUB_PAGES: "true"
+        run: npm run build
+
+      - name: Install taskboard dependencies
+        working-directory: taskboard
+        run: npm ci
+      - name: Build taskboard
+        working-directory: taskboard
+        env:
+          GITHUB_PAGES: "true"
+          VITE_SUPABASE_URL: ${{ secrets.TASKBOARD_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TASKBOARD_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Merge into one site
+        run: |
+          mkdir -p site
+          cp -r app/dist/. site/
+          mkdir -p site/taskboard
+          cp -r taskboard/dist/. site/taskboard/
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
