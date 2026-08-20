@@ -52,8 +52,6 @@ jobs:
         working-directory: taskboard
         env:
           GITHUB_PAGES: "true"
-          VITE_SUPABASE_URL: ${{ secrets.TASKBOARD_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TASKBOARD_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - name: Merge into one site
