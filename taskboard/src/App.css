@@ -484,6 +484,35 @@ input.urgency-overdue {
 /* ---------------------------------------------------------------------- */
 /* Board backgrounds */
 /* ---------------------------------------------------------------------- */
+.bg-photo-upload {
+  width: 100%;
+  aspect-ratio: 2.6;
+  border-radius: 14px;
+  border: 2px dashed var(--border);
+  background-color: var(--surface-2);
+  background-size: cover;
+  background-position: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 590;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+.bg-photo-upload:hover {
+  border-color: var(--accent);
+}
+.bg-photo-upload.active {
+  border-style: solid;
+  border-color: var(--accent);
+}
+.bg-photo-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .bg-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

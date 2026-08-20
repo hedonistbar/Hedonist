@@ -7,6 +7,7 @@ export type Board = {
   owner_id: string;
   name: string;
   background: string | null;
+  background_image_path: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -22,7 +22,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
-import { backgroundCss } from "../lib/backgrounds";
+import { backgroundCss, getBoardBackgroundImageUrl } from "../lib/backgrounds";
 import { initials } from "../lib/initials";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
@@ -189,6 +189,8 @@ export function BoardScreen({
   const [showBackground, setShowBackground] = useState(false);
   const [boardName, setBoardName] = useState(board.name);
   const [boardBackground, setBoardBackground] = useState(board.background);
+  const [boardBackgroundImagePath, setBoardBackgroundImagePath] = useState(board.background_image_path);
+  const [boardBackgroundImageUrl, setBoardBackgroundImageUrl] = useState<string | null>(null);
   const [newListTitle, setNewListTitle] = useState("");
   const [addingCardToList, setAddingCardToList] = useState<string | null>(null);
   const [newCardTitle, setNewCardTitle] = useState("");
@@ -212,6 +214,7 @@ export function BoardScreen({
     if (boardRes.data) {
       setBoardName((boardRes.data as Board).name);
       setBoardBackground((boardRes.data as Board).background);
+      setBoardBackgroundImagePath((boardRes.data as Board).background_image_path);
     }
     if (listsRes.error) setError(listsRes.error.message);
     setLists((listsRes.data as List[] | null) ?? []);
@@ -265,6 +268,14 @@ export function BoardScreen({
       supabase.removeChannel(channel);
     };
   }, [board.id, load]);
+
+  useEffect(() => {
+    if (!boardBackgroundImagePath) {
+      setBoardBackgroundImageUrl(null);
+      return;
+    }
+    getBoardBackgroundImageUrl(boardBackgroundImagePath).then(setBoardBackgroundImageUrl);
+  }, [boardBackgroundImagePath]);
 
   const myMembership = members.find((m) => m.user_id === userId) ?? null;
   const isOwner = myMembership?.role === "owner";
@@ -409,10 +420,14 @@ export function BoardScreen({
 
   if (loading) return <div className="spinner-screen">Загрузка…</div>;
 
-  const bg = backgroundCss(boardBackground);
+  const bgStyle: CSSProperties | undefined = boardBackgroundImageUrl
+    ? { backgroundImage: `url(${boardBackgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : backgroundCss(boardBackground)
+      ? { background: backgroundCss(boardBackground)! }
+      : undefined;
 
   return (
-    <div className="board-screen" style={bg ? { background: bg } : undefined}>
+    <div className="board-screen" style={bgStyle}>
       <div className="topbar">
         <button className="icon-btn" onClick={onBack}>
           ← Доски
@@ -530,6 +545,7 @@ export function BoardScreen({
         <BackgroundModal
           boardId={board.id}
           current={boardBackground}
+          currentImagePath={boardBackgroundImagePath}
           onClose={() => setShowBackground(false)}
           onChanged={load}
         />
