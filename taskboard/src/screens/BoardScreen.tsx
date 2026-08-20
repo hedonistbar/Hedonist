@@ -43,56 +43,76 @@ function CardFace({
   attachCount,
   assignee,
   onOpen,
+  onToggleDone,
 }: {
   card: Card;
   progress: Progress | undefined;
   attachCount: number;
   assignee: BoardMember | null;
   onOpen: () => void;
+  onToggleDone: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: "card", listId: card.list_id },
   });
   const urgency = dueUrgency(card.due_date, card.is_done);
-  const spine = card.is_done
-    ? " spine-done"
-    : urgency === "overdue" || urgency === "today"
-      ? " spine-danger"
-      : urgency === "soon"
-        ? " spine-warning"
-        : "";
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
-      className={`card-face${card.is_done ? " done" : ""}${spine}`}
+      className={`card-face${card.is_done ? " done" : ""}`}
       onClick={onOpen}
       {...attributes}
       {...listeners}
     >
-      <div className="card-face-top">
-        <span className="card-face-title">{card.title}</span>
-        {assignee && (
-          <span className="avatar" title={assignee.display_name ?? undefined}>
-            {initials(assignee.display_name)}
-          </span>
+      <button
+        type="button"
+        className={`card-checkbox${card.is_done ? " checked" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleDone();
+        }}
+        aria-label={card.is_done ? "Отметить как невыполненную" : "Отметить как выполненную"}
+      >
+        {card.is_done && (
+          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+            <path
+              d="M1 5l3.2 3.2L11 1"
+              stroke="#fff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         )}
-      </div>
-      {(card.due_date || progress || attachCount > 0) && (
-        <div className="card-face-meta">
-          {card.due_date && (
-            <span className={`badge${urgency ? ` urgency-${urgency}` : ""}`}>🕐 {formatDueDate(card.due_date)}</span>
-          )}
-          {progress && (
-            <span className="badge">
-              ☑ {progress.done}/{progress.total}
+      </button>
+      <div className="card-face-body">
+        <div className="card-face-top">
+          <span className="card-face-title">{card.title}</span>
+          {assignee && (
+            <span className="avatar" title={assignee.display_name ?? undefined}>
+              {initials(assignee.display_name)}
             </span>
           )}
-          {attachCount > 0 && <span className="badge">📎 {attachCount}</span>}
         </div>
-      )}
+        {(card.due_date || progress || attachCount > 0) && (
+          <div className="card-face-meta">
+            {card.due_date && (
+              <span className={`badge${urgency ? ` urgency-${urgency}` : ""}`}>
+                🕐 {formatDueDate(card.due_date)}
+              </span>
+            )}
+            {progress && (
+              <span className="badge">
+                ☑ {progress.done}/{progress.total}
+              </span>
+            )}
+            {attachCount > 0 && <span className="badge">📎 {attachCount}</span>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -369,6 +389,12 @@ export function BoardScreen({
     setCards((prev) => prev.map((c) => (c.id === activeCardId ? { ...c, list_id: overListId! } : c)));
   }
 
+  async function toggleCardDone(card: Card) {
+    const next = !card.is_done;
+    setCards((prev) => prev.map((c) => (c.id === card.id ? { ...c, is_done: next } : c)));
+    await supabase.from("cards").update({ is_done: next }).eq("id", card.id);
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveId(null);
@@ -489,6 +515,7 @@ export function BoardScreen({
                     attachCount={attachmentCounts[card.id] ?? 0}
                     assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
                     onOpen={() => setSelectedCard(card)}
+                    onToggleDone={() => toggleCardDone(card)}
                   />
                 ))}
               </ListColumn>
@@ -512,8 +539,11 @@ export function BoardScreen({
         <DragOverlay>
           {activeCard ? (
             <div className="card-face drag-overlay">
-              <div className="card-face-top">
-                <span className="card-face-title">{activeCard.title}</span>
+              <div className={`card-checkbox${activeCard.is_done ? " checked" : ""}`} />
+              <div className="card-face-body">
+                <div className="card-face-top">
+                  <span className="card-face-title">{activeCard.title}</span>
+                </div>
               </div>
             </div>
           ) : activeList ? (
