@@ -290,15 +290,18 @@ export function CardModal({
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) uploadFile(file);
+            onChange={async (e) => {
+              const files = Array.from(e.target.files ?? []);
               e.target.value = "";
+              for (const file of files) {
+                await uploadFile(file);
+              }
             }}
           />
           <button className="btn btn-ghost" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            {uploading ? "Загружаем…" : "+ Прикрепить файл"}
+            {uploading ? "Загружаем…" : "+ Прикрепить файлы"}
           </button>
         </div>
 

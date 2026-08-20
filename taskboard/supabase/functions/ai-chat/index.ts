@@ -1,5 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { encodeBase64 } from "jsr:@std/encoding/base64";
+
+const ATTACHMENTS_BUCKET = "attachments";
+const MAX_ATTACHMENTS = 4;
+const MAX_TEXT_CHARS = 8000;
+const MAX_BINARY_BYTES = 4 * 1024 * 1024; // 4MB — keeps the request payload sane
+
+function isTextLike(contentType: string | null, fileName: string): boolean {
+  if (contentType?.startsWith("text/") || contentType === "application/json") return true;
+  return /\.(txt|md|csv|json|log)$/i.test(fileName);
+}
 
 // Browsers preflight any cross-origin request carrying a custom
 // Authorization header, so the OPTIONS branch below and these headers on
@@ -81,6 +92,57 @@ Deno.serve(async (req) => {
     .order("created_at", { ascending: true })
     .limit(30);
 
+  const { data: attachments } = await userClient
+    .from("attachments")
+    .select("file_name, storage_path, content_type, size_bytes")
+    .eq("card_id", card_id)
+    .order("created_at", { ascending: false })
+    .limit(MAX_ATTACHMENTS);
+
+  const attachmentTexts: string[] = [];
+  const attachmentBlocks: Record<string, unknown>[] = [];
+  const attachmentNotes: string[] = [];
+
+  for (const a of (attachments ?? []) as { file_name: string; storage_path: string; content_type: string | null; size_bytes: number | null }[]) {
+    if (isTextLike(a.content_type, a.file_name)) {
+      const { data: blob } = await userClient.storage.from(ATTACHMENTS_BUCKET).download(a.storage_path);
+      if (blob) {
+        const text = new TextDecoder().decode(await blob.arrayBuffer()).slice(0, MAX_TEXT_CHARS);
+        attachmentTexts.push(`Файл «${a.file_name}»:\n${text}`);
+      }
+      continue;
+    }
+    if ((a.size_bytes ?? 0) > MAX_BINARY_BYTES) {
+      attachmentNotes.push(`«${a.file_name}» — слишком большой файл, не читаю содержимое.`);
+      continue;
+    }
+    if (a.content_type === "application/pdf") {
+      const { data: blob } = await userClient.storage.from(ATTACHMENTS_BUCKET).download(a.storage_path);
+      if (blob) {
+        const base64 = encodeBase64(await blob.arrayBuffer());
+        attachmentBlocks.push({
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data: base64 },
+        });
+        attachmentNotes.push(`«${a.file_name}» — приложен как документ, можно ссылаться на его содержимое.`);
+      }
+      continue;
+    }
+    if (a.content_type?.startsWith("image/")) {
+      const { data: blob } = await userClient.storage.from(ATTACHMENTS_BUCKET).download(a.storage_path);
+      if (blob) {
+        const base64 = encodeBase64(await blob.arrayBuffer());
+        attachmentBlocks.push({
+          type: "image",
+          source: { type: "base64", media_type: a.content_type, data: base64 },
+        });
+        attachmentNotes.push(`«${a.file_name}» — приложено как изображение, можно его описать/проанализировать.`);
+      }
+      continue;
+    }
+    attachmentNotes.push(`«${a.file_name}» (${a.content_type ?? "неизвестный тип"}) — прикреплён, но этот тип файла я читать не умею.`);
+  }
+
   // Save the user's message first so it's visible even if the Anthropic
   // call below fails.
   const { error: insertUserError } = await userClient
@@ -112,13 +174,19 @@ Deno.serve(async (req) => {
     card.description ? `Описание: ${card.description}` : null,
     card.due_date ? `Срок: ${new Date(card.due_date as string).toLocaleString("ru-RU")}` : null,
     checklistText ? `Чек-лист:\n${checklistText}` : null,
+    attachmentNotes.length ? `Вложения карточки:\n${attachmentNotes.map((n) => `- ${n}`).join("\n")}` : null,
+    attachmentTexts.length ? `Содержимое текстовых вложений:\n\n${attachmentTexts.join("\n\n---\n\n")}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
+  const lastUserContent = attachmentBlocks.length
+    ? [{ type: "text", text: message }, ...attachmentBlocks]
+    : message;
+
   const messages = [
     ...((history ?? []) as { role: string; content: string }[]).map((m) => ({ role: m.role, content: m.content })),
-    { role: "user", content: message },
+    { role: "user", content: lastUserContent },
   ];
 
   const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {

@@ -95,10 +95,10 @@ export function BackgroundModal({
         {error && <div className="error-text">{error}</div>}
 
         <p className="sub" style={{ marginTop: 14 }}>
-          Или выберите один из фонов сезона (палитра Pantone 2026):
+          Или выберите готовый фон (палитра Pantone 2026):
         </p>
         <div className="bg-grid">
-          {BOARD_BACKGROUNDS.map((bg) => (
+          {BOARD_BACKGROUNDS.filter((bg) => bg.kind !== "flat" || bg.id === "default").map((bg) => (
             <button
               key={bg.id}
               className={`bg-swatch${!currentImagePath && (current ?? "default") === bg.id ? " active" : ""}`}
@@ -108,6 +108,19 @@ export function BackgroundModal({
             >
               {!bg.css && <span className="bg-swatch-none" />}
             </button>
+          ))}
+        </div>
+
+        <p className="sub" style={{ marginTop: 18 }}>Однотонные цвета сезона:</p>
+        <div className="bg-grid bg-grid-flat">
+          {BOARD_BACKGROUNDS.filter((bg) => bg.kind === "flat" && bg.id !== "default").map((bg) => (
+            <button
+              key={bg.id}
+              className={`bg-swatch bg-swatch-flat${!currentImagePath && current === bg.id ? " active" : ""}`}
+              style={bg.css ? { background: bg.css } : undefined}
+              onClick={() => pick(bg.id)}
+              title={bg.label}
+            />
           ))}
         </div>
       </div>

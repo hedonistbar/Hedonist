@@ -533,6 +533,16 @@ input.urgency-overdue {
 .bg-swatch.active {
   border-color: var(--accent);
 }
+.bg-grid-flat {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.bg-swatch-flat {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border-width: 3px;
+}
+
 .bg-swatch-none {
   display: block;
   width: 100%;
