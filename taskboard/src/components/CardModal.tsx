@@ -3,6 +3,7 @@ import { ATTACHMENTS_BUCKET, supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
 import { notifyCardAssigned } from "../lib/push";
 import { CardAIPanel } from "./CardAIPanel";
+import { swatchColor } from "../lib/swatchColor";
 import type { Attachment, BoardMember, Card, ChecklistItem, List } from "../lib/database.types";
 
 function toDatetimeLocal(iso: string | null): string {
@@ -202,13 +203,16 @@ export function CardModal({
         <div className="info-card">
           <div className="info-row">
             <span className="info-row-label">Список</span>
-            <select className="info-row-select" value={listId} onChange={(e) => changeList(e.target.value)}>
-              {lists.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.title}
-                </option>
-              ))}
-            </select>
+            <span className="info-row-value-group">
+              <span className="info-row-dot" style={{ background: swatchColor(listId) }} />
+              <select className="info-row-select" value={listId} onChange={(e) => changeList(e.target.value)}>
+                {lists.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.title}
+                  </option>
+                ))}
+              </select>
+            </span>
           </div>
           <div className="info-row">
             <span className="info-row-label">Срок</span>

@@ -4,20 +4,10 @@ import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../
 import { AISettingsModal } from "../components/AISettingsModal";
 import { Logo } from "../components/Logo";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { BOARD_BACKGROUNDS } from "../lib/backgrounds";
+import { swatchColor } from "../lib/swatchColor";
 import type { Board } from "../lib/database.types";
 
 type Progress = { done: number; total: number };
-
-// Boards don't have their own color field, so derive a stable swatch per
-// board from the same Pantone flat palette backgrounds already use — a
-// board always shows the same color without needing a schema change.
-const SWATCH_COLORS = BOARD_BACKGROUNDS.filter((b) => b.kind === "flat" && b.css).map((b) => b.css!);
-function swatchColor(boardId: string): string {
-  let hash = 0;
-  for (let i = 0; i < boardId.length; i++) hash = (hash * 31 + boardId.charCodeAt(i)) >>> 0;
-  return SWATCH_COLORS[hash % SWATCH_COLORS.length];
-}
 
 export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => void }) {
   const [boards, setBoards] = useState<Board[]>([]);

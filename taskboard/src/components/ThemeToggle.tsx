@@ -1,33 +1,38 @@
 import { useState } from "react";
 import { getStoredTheme, setStoredTheme, type ThemePreference } from "../lib/theme";
 
-const ORDER: ThemePreference[] = ["system", "light", "dark"];
-const ICON: Record<ThemePreference, string> = { system: "🌗", light: "☀️", dark: "🌙" };
-const LABEL: Record<ThemePreference, string> = {
-  system: "Как в системе",
-  light: "Светлая",
-  dark: "Тёмная",
-};
+const OPTIONS: { pref: ThemePreference; icon: string; label: string }[] = [
+  { pref: "system", icon: "🌗", label: "Авто" },
+  { pref: "light", icon: "☀️", label: "Светлая" },
+  { pref: "dark", icon: "🌙", label: "Тёмная" },
+];
 
-/** Cycles system → light → dark → system on each tap. */
+/** A segmented chip row, matching the design reference's THEME picker,
+ * instead of a single icon button cycling through the options. The text
+ * label collapses to just the icon on narrow screens (CSS) — three full
+ * words don't fit next to the rest of the topbar's buttons on an iPhone. */
 export function ThemeToggle() {
   const [pref, setPref] = useState<ThemePreference>(getStoredTheme());
 
-  function cycle() {
-    const next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length];
+  function choose(next: ThemePreference) {
     setStoredTheme(next);
     setPref(next);
   }
 
   return (
-    <button
-      type="button"
-      className="icon-btn theme-toggle"
-      onClick={cycle}
-      title={`Тема: ${LABEL[pref]} — нажмите, чтобы сменить`}
-      aria-label={`Тема: ${LABEL[pref]}`}
-    >
-      {ICON[pref]}
-    </button>
+    <div className="theme-toggle" role="group" aria-label="Тема оформления">
+      {OPTIONS.map((opt) => (
+        <button
+          key={opt.pref}
+          type="button"
+          className={`theme-toggle-chip${pref === opt.pref ? " active" : ""}`}
+          onClick={() => choose(opt.pref)}
+          title={opt.label}
+        >
+          <span className="theme-toggle-icon">{opt.icon}</span>
+          <span className="theme-toggle-label">{opt.label}</span>
+        </button>
+      ))}
+    </div>
   );
 }

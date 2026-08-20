@@ -25,6 +25,7 @@ import { dueUrgency } from "../lib/dueUrgency";
 import { backgroundCss, getBoardBackgroundImageUrl } from "../lib/backgrounds";
 import { initials } from "../lib/initials";
 import { useIsMobile } from "../lib/useIsMobile";
+import { swatchColor } from "../lib/swatchColor";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
 import { BackgroundModal } from "../components/BackgroundModal";
@@ -140,6 +141,7 @@ function CardFace({
  * board loses that grouping. */
 function TaskRow({
   card,
+  listId,
   listTitle,
   progress,
   attachCount,
@@ -148,6 +150,7 @@ function TaskRow({
   onToggleDone,
 }: {
   card: Card;
+  listId: string;
   listTitle: string;
   progress: Progress | undefined;
   attachCount: number;
@@ -189,7 +192,12 @@ function TaskRow({
             </span>
           )}
         </div>
-        {listTitle && <span className="task-row-list-tag">{listTitle}</span>}
+        {listTitle && (
+          <span className="task-row-list-tag">
+            <span className="task-row-list-dot" style={{ background: swatchColor(listId) }} />
+            {listTitle}
+          </span>
+        )}
         {(card.due_date || progress || attachCount > 0) && (
           <div className="card-face-meta">
             {card.due_date && (
@@ -612,6 +620,7 @@ export function BoardScreen({
                     <TaskRow
                       key={card.id}
                       card={card}
+                      listId={card.list_id}
                       listTitle={listById.get(card.list_id)?.title ?? ""}
                       progress={progressByCard[card.id]}
                       attachCount={attachmentCounts[card.id] ?? 0}
@@ -629,6 +638,7 @@ export function BoardScreen({
                     <TaskRow
                       key={card.id}
                       card={card}
+                      listId={card.list_id}
                       listTitle={listById.get(card.list_id)?.title ?? ""}
                       progress={progressByCard[card.id]}
                       attachCount={attachmentCounts[card.id] ?? 0}
@@ -646,6 +656,7 @@ export function BoardScreen({
                     <TaskRow
                       key={card.id}
                       card={card}
+                      listId={card.list_id}
                       listTitle={listById.get(card.list_id)?.title ?? ""}
                       progress={progressByCard[card.id]}
                       attachCount={attachmentCounts[card.id] ?? 0}
@@ -663,6 +674,7 @@ export function BoardScreen({
                     <TaskRow
                       key={card.id}
                       card={card}
+                      listId={card.list_id}
                       listTitle={listById.get(card.list_id)?.title ?? ""}
                       progress={progressByCard[card.id]}
                       attachCount={attachmentCounts[card.id] ?? 0}
@@ -687,7 +699,8 @@ export function BoardScreen({
                       <TaskRow
                         key={card.id}
                         card={card}
-                        listTitle={listById.get(card.list_id)?.title ?? ""}
+                        listId={card.list_id}
+                      listTitle={listById.get(card.list_id)?.title ?? ""}
                         progress={progressByCard[card.id]}
                         attachCount={attachmentCounts[card.id] ?? 0}
                         assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}

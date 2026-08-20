@@ -98,30 +98,40 @@ export function BackgroundModal({
           Или выберите готовый фон (палитра Pantone 2026):
         </p>
         <div className="bg-grid">
-          {BOARD_BACKGROUNDS.filter((bg) => bg.kind !== "flat" || bg.id === "default").map((bg) => (
-            <button
-              key={bg.id}
-              className={`bg-swatch${!currentImagePath && (current ?? "default") === bg.id ? " active" : ""}`}
-              style={bg.css ? { background: bg.css } : undefined}
-              onClick={() => pick(bg.id)}
-              title={bg.label}
-            >
-              {!bg.css && <span className="bg-swatch-none" />}
-            </button>
-          ))}
+          {BOARD_BACKGROUNDS.filter((bg) => bg.kind !== "flat" || bg.id === "default").map((bg) => {
+            const active = !currentImagePath && (current ?? "default") === bg.id;
+            return (
+              <div key={bg.id} className={`bg-swatch-item${active ? " active" : ""}`}>
+                <button
+                  type="button"
+                  className={`bg-swatch${active ? " active" : ""}`}
+                  style={bg.css ? { background: bg.css } : undefined}
+                  onClick={() => pick(bg.id)}
+                >
+                  {!bg.css && <span className="bg-swatch-none" />}
+                </button>
+                <span className="bg-swatch-label">{bg.label}</span>
+              </div>
+            );
+          })}
         </div>
 
         <p className="sub" style={{ marginTop: 18 }}>Однотонные цвета сезона:</p>
         <div className="bg-grid bg-grid-flat">
-          {BOARD_BACKGROUNDS.filter((bg) => bg.kind === "flat" && bg.id !== "default").map((bg) => (
-            <button
-              key={bg.id}
-              className={`bg-swatch bg-swatch-flat${!currentImagePath && current === bg.id ? " active" : ""}`}
-              style={bg.css ? { background: bg.css } : undefined}
-              onClick={() => pick(bg.id)}
-              title={bg.label}
-            />
-          ))}
+          {BOARD_BACKGROUNDS.filter((bg) => bg.kind === "flat" && bg.id !== "default").map((bg) => {
+            const active = !currentImagePath && current === bg.id;
+            return (
+              <div key={bg.id} className={`bg-swatch-item${active ? " active" : ""}`}>
+                <button
+                  type="button"
+                  className={`bg-swatch${active ? " active" : ""}`}
+                  style={bg.css ? { background: bg.css } : undefined}
+                  onClick={() => pick(bg.id)}
+                />
+                <span className="bg-swatch-label">{bg.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
