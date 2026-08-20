@@ -783,6 +783,7 @@ export function BoardScreen({
         <CardModal
           card={cards.find((c) => c.id === selectedCard.id) ?? selectedCard}
           members={members}
+          lists={lists}
           onClose={() => setSelectedCard(null)}
           onChanged={load}
           onDeleted={() => {

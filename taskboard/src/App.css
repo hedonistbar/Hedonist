@@ -823,19 +823,125 @@ input.urgency-overdue {
   font-size: 19px;
 }
 
-.card-title-input {
-  flex: 1;
-  font-size: 17px;
-  font-weight: 650;
-  border: 1px solid transparent;
-  background: transparent;
-  padding: 6px 8px;
-  border-radius: 8px;
+/* ---------------------------------------------------------------------- */
+/* Card modal — Task Detail treatment from the design reference: serif
+   title, a full-width complete/incomplete button, and a divided info-card
+   for metadata instead of a stack of labeled form fields. */
+/* ---------------------------------------------------------------------- */
+.card-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
-.card-title-input:hover,
+.text-link-muted,
+.text-link-danger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.text-link-muted {
+  color: var(--text-muted);
+}
+.text-link-danger {
+  color: var(--danger);
+}
+
+.card-title-input {
+  display: block;
+  width: 100%;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--text);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  padding: 6px 0 10px;
+  border-radius: 0;
+}
 .card-title-input:focus {
-  border-color: var(--border);
+  border-bottom-color: var(--accent);
+}
+
+.mark-complete-btn {
+  display: block;
+  width: 100%;
+  margin: 16px 0 18px;
+  padding: 13px;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.mark-complete-btn:hover {
+  opacity: 0.88;
+}
+.mark-complete-btn.incomplete {
+  background: var(--accent);
+  color: #fff;
+}
+.mark-complete-btn.complete {
   background: var(--surface-2);
+  color: var(--text);
+}
+
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.05);
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.info-row:last-child {
+  border-bottom: none;
+}
+.info-row-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.info-row-select,
+.info-row-input {
+  border: none;
+  background: transparent;
+  text-align: right;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  padding: 0;
+  max-width: 60%;
+}
+.info-row-select:focus,
+.info-row-input:focus {
+  outline: none;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 18px 0 8px;
+}
+.section-label:first-of-type {
+  margin-top: 0;
 }
 
 .checkbox-label {

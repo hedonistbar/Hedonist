@@ -3,7 +3,7 @@ import { ATTACHMENTS_BUCKET, supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
 import { notifyCardAssigned } from "../lib/push";
 import { CardAIPanel } from "./CardAIPanel";
-import type { Attachment, BoardMember, Card, ChecklistItem } from "../lib/database.types";
+import type { Attachment, BoardMember, Card, ChecklistItem, List } from "../lib/database.types";
 
 function toDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
@@ -22,12 +22,14 @@ function formatSize(bytes: number | null): string {
 export function CardModal({
   card,
   members,
+  lists,
   onClose,
   onChanged,
   onDeleted,
 }: {
   card: Card;
   members: BoardMember[];
+  lists: List[];
   onClose: () => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -37,6 +39,7 @@ export function CardModal({
   const [dueDate, setDueDate] = useState(toDatetimeLocal(card.due_date));
   const [isDone, setIsDone] = useState(card.is_done);
   const [assignedTo, setAssignedTo] = useState(card.assigned_to ?? "");
+  const [listId, setListId] = useState(card.list_id);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -154,6 +157,11 @@ export function CardModal({
     if (userId) notifyCardAssigned(card.id);
   }
 
+  async function changeList(nextListId: string) {
+    setListId(nextListId);
+    await saveField({ list_id: nextListId });
+  }
+
   async function applyAiDescription(text: string) {
     setDescription(text);
     await saveField({ description: text });
@@ -165,60 +173,76 @@ export function CardModal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal card-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <label className="checkbox-label" style={{ marginRight: 8 }}>
-            <input type="checkbox" checked={isDone} onChange={toggleDone} />
-          </label>
-          <input
-            className="card-title-input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={() => title.trim() && title !== card.title && saveField({ title: title.trim() })}
-          />
-          <button className="icon-btn" onClick={onClose}>
-            ✕
+        <div className="card-modal-header">
+          <button className="text-link-muted" onClick={onClose}>
+            Закрыть
+          </button>
+          <button className="text-link-danger" onClick={deleteCard}>
+            Удалить
           </button>
         </div>
 
         {error && <div className="error-text">{error}</div>}
 
-        <div className="field">
-          <label htmlFor="due-date">Срок</label>
-          <input
-            id="due-date"
-            type="datetime-local"
-            value={dueDate}
-            onChange={(e) => {
-              setDueDate(e.target.value);
-              saveField({ due_date: e.target.value ? new Date(e.target.value).toISOString() : null });
-            }}
-            className={urgency ? `urgency-${urgency}` : undefined}
-          />
+        <input
+          className="card-title-input"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={() => title.trim() && title !== card.title && saveField({ title: title.trim() })}
+        />
+
+        <button
+          type="button"
+          className={`mark-complete-btn${isDone ? " complete" : " incomplete"}`}
+          onClick={toggleDone}
+        >
+          {isDone ? "Отметить как невыполненную" : "Отметить как выполненную"}
+        </button>
+
+        <div className="info-card">
+          <div className="info-row">
+            <span className="info-row-label">Список</span>
+            <select className="info-row-select" value={listId} onChange={(e) => changeList(e.target.value)}>
+              {lists.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="info-row">
+            <span className="info-row-label">Срок</span>
+            <input
+              type="datetime-local"
+              value={dueDate}
+              className={`info-row-input${urgency ? ` urgency-${urgency}` : ""}`}
+              onChange={(e) => {
+                setDueDate(e.target.value);
+                saveField({ due_date: e.target.value ? new Date(e.target.value).toISOString() : null });
+              }}
+            />
+          </div>
+          <div className="info-row">
+            <span className="info-row-label">Исполнитель</span>
+            <select className="info-row-select" value={assignedTo} onChange={(e) => changeAssignee(e.target.value)}>
+              <option value="">Не назначен</option>
+              {members.map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.display_name ?? m.user_id}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="assignee">Исполнитель</label>
-          <select id="assignee" value={assignedTo} onChange={(e) => changeAssignee(e.target.value)}>
-            <option value="">Не назначен</option>
-            {members.map((m) => (
-              <option key={m.user_id} value={m.user_id}>
-                {m.display_name ?? m.user_id}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field">
-          <label htmlFor="description">Описание</label>
-          <textarea
-            id="description"
-            rows={4}
-            placeholder="Подробности…"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={() => description !== (card.description ?? "") && saveField({ description: description || null })}
-          />
-        </div>
+        <div className="section-label">Заметки</div>
+        <textarea
+          rows={4}
+          placeholder="Нет заметок — добавьте подробности…"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={() => description !== (card.description ?? "") && saveField({ description: description || null })}
+        />
 
         <CardAIPanel
           cardId={card.id}
@@ -232,9 +256,9 @@ export function CardModal({
         />
 
         <div className="field">
-          <label>
+          <div className="section-label">
             Чек-лист {checklist.length > 0 && `(${doneCount}/${checklist.length})`}
-          </label>
+          </div>
           {checklist.length > 0 && (
             <div className="progress-bar">
               <div
@@ -269,7 +293,7 @@ export function CardModal({
         </div>
 
         <div className="field">
-          <label>Вложения</label>
+          <div className="section-label">Вложения</div>
           <div className="attachments">
             {attachments.map((a) => (
               <div className="attachment-row" key={a.id}>
@@ -304,10 +328,6 @@ export function CardModal({
             {uploading ? "Загружаем…" : "+ Прикрепить файлы"}
           </button>
         </div>
-
-        <button className="btn btn-danger" onClick={deleteCard} style={{ marginTop: 8 }}>
-          Удалить карточку
-        </button>
       </div>
     </div>
   );
