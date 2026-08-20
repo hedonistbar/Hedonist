@@ -125,7 +125,8 @@
   border: none;
   background: var(--surface-2);
   color: var(--text);
-  border-radius: 980px;
+  /* Chip radius from the design reference — refined/tight, not pill-shaped. */
+  border-radius: 10px;
   padding: 10px 14px;
   min-height: 40px;
   font-size: 13.5px;
@@ -242,7 +243,7 @@ select {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 980px;
+  border-radius: 12px;
   padding: 11px 18px;
   min-height: 44px;
   font-size: 15px;
