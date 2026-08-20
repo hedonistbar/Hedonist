@@ -13,13 +13,19 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
+      },
       includeAssets: ["icons/apple-touch-icon.png"],
       manifest: {
         name: "Taskboard",
         short_name: "Taskboard",
         description: "Личный таск-менеджер: доски, списки, карточки",
-        theme_color: "#12233d",
-        background_color: "#12233d",
+        theme_color: "#000000",
+        background_color: "#000000",
         display: "standalone",
         start_url: base,
         scope: base,

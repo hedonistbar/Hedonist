@@ -12,8 +12,14 @@ Supabase-база, свой набор таблиц, ничего общего �
 - Несколько независимых досок, у каждой свой владелец.
 - Списки (колонки) внутри доски, карточки внутри списков.
 - Перетаскивание карточек между списками и колонок между собой (drag & drop).
-- В карточке: заголовок, описание, дата/время выполнения (с подсветкой
-  просроченных), чек-лист с прогресс-баром, вложения (любые файлы).
+- В карточке: заголовок, описание, дата/время выполнения (жёлтая за день до
+  срока, красная в день срока и если просрочена), исполнитель из участников
+  доски, чек-лист с прогресс-баром, вложения (любые файлы).
+- Push-уведомления: приходят тому, кого назначили на карточку (сразу), и
+  всем, у кого срок подходит в течение суток (проверка каждые 15 минут).
+  Работает даже когда приложение закрыто — обычный Web Push, «Включить
+  уведомления» на экране «Мои доски».
+- Фон доски — несколько градиентных пресетов на выбор («Фон» в шапке доски).
 - Поделиться доской по email — приглашённый видит и редактирует её наравне
   с владельцем (владелец может убрать участника, участник может уйти сам).
 - Живые обновления: изменения от второго человека на той же доске
@@ -24,14 +30,27 @@ Supabase-база, свой набор таблиц, ничего общего �
 ## Настройка
 
 Уже настроено — есть готовый Supabase-проект (`taskboard`, регион
-eu-central-1), миграция применена, RLS и права проверены через security
-advisor. Ничего создавать не нужно, можно сразу запускать.
+eu-central-1), все миграции применены, две Edge Functions (`send-push`,
+`due-reminders`) задеплоены, cron на проверку сроков настроен. Ничего
+создавать не нужно, можно сразу запускать.
 
 Если захотите пересадить приложение на свой собственный Supabase-проект:
-создайте его на [supabase.com](https://supabase.com), выполните
-`migrations/0001_init.sql` целиком в SQL Editor, затем скопируйте
-`.env.example` в `.env` и заполните `VITE_SUPABASE_URL` /
-`VITE_SUPABASE_PUBLISHABLE_KEY` из Project Settings → API.
+
+1. Создайте проект на [supabase.com](https://supabase.com), выполните
+   `migrations/*.sql` по порядку в SQL Editor.
+2. Сгенерируйте пару VAPID-ключей (`npx web-push generate-vapid-keys`) и
+   сохраните секреты через Vault (SQL Editor):
+   ```sql
+   select vault.create_secret('<публичный ключ>', 'vapid_public_key');
+   select vault.create_secret('<приватный ключ>', 'vapid_private_key');
+   select vault.create_secret('mailto:you@example.com', 'vapid_subject');
+   select vault.create_secret('<случайная строка>', 'cron_shared_secret');
+   ```
+3. Задеплойте `supabase/functions/send-push` и `supabase/functions/due-reminders`
+   (`supabase functions deploy` через Supabase CLI, или вручную через дашборд).
+4. Пропишите свой публичный VAPID-ключ в `src/lib/push.ts` (`VAPID_PUBLIC_KEY`).
+5. Скопируйте `.env.example` в `.env` и заполните `VITE_SUPABASE_URL` /
+   `VITE_SUPABASE_PUBLISHABLE_KEY` из Project Settings → API.
 
 ## Запуск локально
 
@@ -69,15 +88,19 @@ workflow параллельно собирает и `app/` (Hedonist AI-marketer
 
 ```
 taskboard/
-  migrations/0001_init.sql   Схема БД, RLS, RPC для шаринга досок
-  src/lib/                    Supabase-клиент, авторизация, типы, drag&drop helpers
-  src/screens/                AuthScreen, BoardsScreen, BoardScreen
-  src/components/             CardModal, ShareModal
+  migrations/                 Схема БД, RLS, RPC — по порядку, 0001 → 0004
+  supabase/functions/         send-push (пинг при назначении), due-reminders (cron)
+  src/lib/                     Supabase-клиент, авторизация, типы, push, drag&drop, фоны
+  src/screens/                 AuthScreen, BoardsScreen, BoardScreen
+  src/components/              CardModal, ShareModal, BackgroundModal
+  src/sw.ts                    Service worker (кастомный, обрабатывает push)
 ```
 
 ## Модель данных
 
-`boards` → `board_members` (доступ и роли: owner/member) → `lists` →
-`cards` → `checklist_items` / `attachments` (файлы — в приватном Storage-
-бакете `attachments`, метаданные — в таблице). Всё под Row Level Security:
-видно и редактируемо только участникам конкретной доски.
+`boards` (+ `background`) → `board_members` (доступ и роли: owner/member) →
+`lists` → `cards` (+ `assigned_to`, `due_notified_at`) →
+`checklist_items` / `attachments` (файлы — в приватном Storage-бакете
+`attachments`, метаданные — в таблице). `push_subscriptions` — одна запись
+на браузер/устройство с включёнными уведомлениями. Всё под Row Level
+Security: видно и редактируемо только участникам конкретной доски.

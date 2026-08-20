@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { dropIndexFromPointer, dropIndexFromPointerX } from "../lib/reorder";
+import { dueUrgency } from "../lib/dueUrgency";
+import { backgroundCss } from "../lib/backgrounds";
+import { initials } from "../lib/initials";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
+import { BackgroundModal } from "../components/BackgroundModal";
 import type { Board, BoardMember, Card, ChecklistItem, List } from "../lib/database.types";
 
 type Progress = { done: number; total: number };
@@ -30,6 +34,9 @@ export function BoardScreen({
   const [error, setError] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showBackground, setShowBackground] = useState(false);
+  const [boardName, setBoardName] = useState(board.name);
+  const [boardBackground, setBoardBackground] = useState(board.background);
   const [newListTitle, setNewListTitle] = useState("");
   const [addingCardToList, setAddingCardToList] = useState<string | null>(null);
   const [newCardTitle, setNewCardTitle] = useState("");
@@ -40,13 +47,18 @@ export function BoardScreen({
   const listsRowRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
-    const [listsRes, cardsRes, checklistRes, attachmentsRes, membersRes] = await Promise.all([
+    const [boardRes, listsRes, cardsRes, checklistRes, attachmentsRes, membersRes] = await Promise.all([
+      supabase.from("boards").select("*").eq("id", board.id).maybeSingle(),
       supabase.from("lists").select("*").eq("board_id", board.id).order("position", { ascending: true }),
       supabase.from("cards").select("*").eq("board_id", board.id).order("position", { ascending: true }),
       supabase.from("checklist_items").select("*").eq("board_id", board.id),
       supabase.from("attachments").select("id, card_id").eq("board_id", board.id),
       supabase.from("board_members").select("*").eq("board_id", board.id),
     ]);
+    if (boardRes.data) {
+      setBoardName((boardRes.data as Board).name);
+      setBoardBackground((boardRes.data as Board).background);
+    }
     if (listsRes.error) setError(listsRes.error.message);
     setLists((listsRes.data as List[] | null) ?? []);
     setCards((cardsRes.data as Card[] | null) ?? []);
@@ -64,6 +76,11 @@ export function BoardScreen({
     load();
     const channel = supabase
       .channel(`board-${board.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "boards", filter: `id=eq.${board.id}` },
+        load,
+      )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "lists", filter: `board_id=eq.${board.id}` },
@@ -215,16 +232,24 @@ export function BoardScreen({
 
   if (loading) return <div className="spinner-screen">Загрузка…</div>;
 
+  const memberById = new Map(members.map((m) => [m.user_id, m]));
+  const bg = backgroundCss(boardBackground);
+
   return (
-    <div className="board-screen">
+    <div className="board-screen" style={bg ? { background: bg } : undefined}>
       <div className="topbar">
         <button className="icon-btn" onClick={onBack}>
           ← Доски
         </button>
-        <h1 style={{ fontSize: 18 }}>{board.name}</h1>
-        <button className="icon-btn" onClick={() => setShowShare(true)}>
-          Поделиться
-        </button>
+        <h1 style={{ fontSize: 18 }}>{boardName}</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="icon-btn" onClick={() => setShowBackground(true)}>
+            Фон
+          </button>
+          <button className="icon-btn" onClick={() => setShowShare(true)}>
+            Поделиться
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-text" style={{ margin: "8px 16px" }}>{error}</div>}
@@ -266,7 +291,8 @@ export function BoardScreen({
               {(cardsByList[list.id] ?? []).map((card) => {
                 const progress = progressByCard[card.id];
                 const attachCount = attachmentCounts[card.id] ?? 0;
-                const overdue = card.due_date && !card.is_done && new Date(card.due_date) < new Date();
+                const urgency = dueUrgency(card.due_date, card.is_done);
+                const assignee = card.assigned_to ? memberById.get(card.assigned_to) : null;
                 return (
                   <div
                     key={card.id}
@@ -278,11 +304,18 @@ export function BoardScreen({
                     }}
                     onClick={() => setSelectedCard(card)}
                   >
-                    <span className="card-face-title">{card.title}</span>
+                    <div className="card-face-top">
+                      <span className="card-face-title">{card.title}</span>
+                      {assignee && (
+                        <span className="avatar" title={assignee.display_name ?? undefined}>
+                          {initials(assignee.display_name)}
+                        </span>
+                      )}
+                    </div>
                     {(card.due_date || progress || attachCount > 0) && (
                       <div className="card-face-meta">
                         {card.due_date && (
-                          <span className={`badge${overdue ? " overdue" : ""}`}>
+                          <span className={`badge${urgency ? ` urgency-${urgency}` : ""}`}>
                             🕐 {formatDueDate(card.due_date)}
                           </span>
                         )}
@@ -355,6 +388,7 @@ export function BoardScreen({
       {selectedCard && (
         <CardModal
           card={cards.find((c) => c.id === selectedCard.id) ?? selectedCard}
+          members={members}
           onClose={() => setSelectedCard(null)}
           onChanged={load}
           onDeleted={() => {
@@ -370,6 +404,15 @@ export function BoardScreen({
           currentUserId={userId}
           isOwner={isOwner}
           onClose={() => setShowShare(false)}
+        />
+      )}
+
+      {showBackground && (
+        <BackgroundModal
+          boardId={board.id}
+          current={boardBackground}
+          onClose={() => setShowBackground(false)}
+          onChanged={load}
         />
       )}
     </div>

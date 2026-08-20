@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
+import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
 import type { Board } from "../lib/database.types";
 
 export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => void }) {
@@ -8,6 +9,24 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [pushStatus, setPushStatus] = useState<PushStatus>("unsubscribed");
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => {
+    if (isPushSupported()) getPushStatus().then(setPushStatus);
+  }, []);
+
+  async function handleEnablePush() {
+    setPushBusy(true);
+    setError(null);
+    const result = await enablePush();
+    setPushBusy(false);
+    if (!result.ok) {
+      setError(result.error ?? "Не удалось включить уведомления.");
+      return;
+    }
+    setPushStatus("subscribed");
+  }
 
   async function load() {
     setLoading(true);
@@ -47,9 +66,17 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
           <span className="eyebrow">TASKBOARD</span>
           <h1>Мои доски</h1>
         </div>
-        <button className="icon-btn" onClick={() => supabase.auth.signOut()}>
-          Выйти
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {isPushSupported() && pushStatus !== "subscribed" && pushStatus !== "unsupported" && (
+            <button className="icon-btn" onClick={handleEnablePush} disabled={pushBusy}>
+              {pushBusy ? "…" : pushStatus === "denied" ? "Уведомления заблокированы" : "🔔 Включить уведомления"}
+            </button>
+          )}
+          {pushStatus === "subscribed" && <span className="pill member">🔔 уведомления вкл.</span>}
+          <button className="icon-btn" onClick={() => supabase.auth.signOut()}>
+            Выйти
+          </button>
+        </div>
       </div>
 
       <main className="content">

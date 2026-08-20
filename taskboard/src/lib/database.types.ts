@@ -6,6 +6,7 @@ export type Board = {
   id: string;
   owner_id: string;
   name: string;
+  background: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +37,8 @@ export type Card = {
   description: string | null;
   due_date: string | null;
   is_done: boolean;
+  assigned_to: string | null;
+  due_notified_at: string | null;
   position: number;
   created_at: string;
   updated_at: string;

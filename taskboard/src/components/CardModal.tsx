@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ATTACHMENTS_BUCKET, supabase } from "../lib/supabase";
-import type { Attachment, Card, ChecklistItem } from "../lib/database.types";
+import { dueUrgency } from "../lib/dueUrgency";
+import { notifyCardAssigned } from "../lib/push";
+import type { Attachment, BoardMember, Card, ChecklistItem } from "../lib/database.types";
 
 function toDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
@@ -18,11 +20,13 @@ function formatSize(bytes: number | null): string {
 
 export function CardModal({
   card,
+  members,
   onClose,
   onChanged,
   onDeleted,
 }: {
   card: Card;
+  members: BoardMember[];
   onClose: () => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -31,6 +35,7 @@ export function CardModal({
   const [description, setDescription] = useState(card.description ?? "");
   const [dueDate, setDueDate] = useState(toDatetimeLocal(card.due_date));
   const [isDone, setIsDone] = useState(card.is_done);
+  const [assignedTo, setAssignedTo] = useState(card.assigned_to ?? "");
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -142,8 +147,14 @@ export function CardModal({
     onDeleted();
   }
 
+  async function changeAssignee(userId: string) {
+    setAssignedTo(userId);
+    await saveField({ assigned_to: userId || null });
+    if (userId) notifyCardAssigned(card.id);
+  }
+
   const doneCount = checklist.filter((i) => i.is_done).length;
-  const overdue = card.due_date && !isDone && new Date(card.due_date) < new Date();
+  const urgency = dueUrgency(card.due_date, isDone);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -175,8 +186,20 @@ export function CardModal({
               setDueDate(e.target.value);
               saveField({ due_date: e.target.value ? new Date(e.target.value).toISOString() : null });
             }}
-            style={overdue ? { borderColor: "var(--overdue)", color: "var(--overdue)" } : undefined}
+            className={urgency ? `urgency-${urgency}` : undefined}
           />
+        </div>
+
+        <div className="field">
+          <label htmlFor="assignee">Исполнитель</label>
+          <select id="assignee" value={assignedTo} onChange={(e) => changeAssignee(e.target.value)}>
+            <option value="">Не назначен</option>
+            {members.map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.display_name ?? m.user_id}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="field">

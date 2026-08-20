@@ -1,43 +1,52 @@
 :root {
-  --ground: #eef2f7;
+  --ground: #f2f2f7;
   --surface: #ffffff;
-  --surface-2: #f4f6f9;
-  --border: #d9dfe6;
-  --text: #172233;
-  --text-muted: #667088;
-  --accent: #2f6fed;
-  --accent-strong: #1f52c4;
-  --accent-soft: rgba(47, 111, 237, 0.12);
-  --success: #2f9e5b;
-  --success-bg: rgba(47, 158, 91, 0.1);
-  --danger: #d9483b;
-  --danger-bg: rgba(217, 72, 59, 0.1);
-  --overdue: #d9483b;
-  --shadow: 0 1px 2px rgba(23, 34, 51, 0.06), 0 6px 20px -8px rgba(23, 34, 51, 0.18);
+  --surface-rgb: 255, 255, 255;
+  --surface-2: #f2f2f7;
+  --border: rgba(60, 60, 67, 0.13);
+  --text: #1c1c1e;
+  --text-muted: #8e8e93;
+  --accent: #007aff;
+  --accent-strong: #0062cc;
+  --accent-soft: rgba(0, 122, 255, 0.12);
+  --success: #34c759;
+  --success-bg: rgba(52, 199, 89, 0.12);
+  --danger: #ff3b30;
+  --danger-bg: rgba(255, 59, 48, 0.12);
+  --warning: #b25000;
+  --warning-bg: rgba(255, 204, 0, 0.18);
+  --overdue: #ff3b30;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px -12px rgba(0, 0, 0, 0.18);
+  --radius: 14px;
+  --radius-lg: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #12192a;
-    --surface: #1a2337;
-    --surface-2: #212c45;
-    --border: #2e3a56;
-    --text: #e8edf7;
-    --text-muted: #9aa7c2;
-    --accent: #5a9dff;
-    --accent-strong: #7fb2ff;
-    --accent-soft: rgba(90, 157, 255, 0.16);
-    --success: #6fcf97;
-    --success-bg: rgba(111, 207, 151, 0.12);
-    --danger: #ef8577;
-    --danger-bg: rgba(239, 133, 119, 0.14);
-    --overdue: #ef8577;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+    --ground: #000000;
+    --surface: #1c1c1e;
+    --surface-rgb: 28, 28, 30;
+    --surface-2: #2c2c2e;
+    --border: rgba(255, 255, 255, 0.12);
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --accent: #0a84ff;
+    --accent-strong: #409cff;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --success: #30d158;
+    --success-bg: rgba(48, 209, 88, 0.16);
+    --danger: #ff453a;
+    --danger-bg: rgba(255, 69, 58, 0.16);
+    --warning: #ffd60a;
+    --warning-bg: rgba(255, 214, 10, 0.16);
+    --overdue: #ff453a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
   }
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -50,8 +59,10 @@ body {
   margin: 0;
   background: var(--ground);
   color: var(--text);
-  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Manrope", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
 }
@@ -59,24 +70,28 @@ body {
 h1,
 h2,
 h3 {
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-wrap: balance;
   margin: 0;
 }
 
 button,
 input,
-textarea {
+textarea,
+select {
   font-family: inherit;
+  letter-spacing: -0.01em;
 }
 
 a {
-  color: var(--accent-strong);
+  color: var(--accent);
 }
 
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
+select:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -84,4 +99,5 @@ a:focus-visible {
 
 .mono {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: normal;
 }
