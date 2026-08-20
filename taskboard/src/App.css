@@ -373,26 +373,53 @@ select {
 }
 
 .card-face {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 11px 13px;
+  /* An asymmetric squircle rather than a uniform rounded rect — the detail
+     that reads as "considered" instead of a default UI-kit card. */
+  border-radius: 20px 10px 20px 10px;
+  padding: 12px 14px 12px 17px;
   cursor: pointer;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--glass-edge);
   display: flex;
   flex-direction: column;
   gap: 7px;
-  transition: transform 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.18s ease;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
+.card-face::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.card-face.spine-danger::before {
+  background: var(--overdue);
+}
+.card-face.spine-warning::before {
+  background: var(--warning);
+}
+.card-face.spine-done::before {
+  background: var(--success);
+}
 .card-face:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px) scale(1.008);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06), 0 18px 32px -14px rgba(0, 0, 0, 0.28), var(--glass-edge);
 }
 .card-face.drag-overlay {
+  border-radius: 20px 10px 20px 10px;
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
   cursor: grabbing;
+}
+.card-face.done {
+  opacity: 0.72;
 }
 .card-face.done .card-face-title {
   text-decoration: line-through;

@@ -55,12 +55,19 @@ function CardFace({
     data: { type: "card", listId: card.list_id },
   });
   const urgency = dueUrgency(card.due_date, card.is_done);
+  const spine = card.is_done
+    ? " spine-done"
+    : urgency === "overdue" || urgency === "today"
+      ? " spine-danger"
+      : urgency === "soon"
+        ? " spine-warning"
+        : "";
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
-      className={`card-face${card.is_done ? " done" : ""}`}
+      className={`card-face${card.is_done ? " done" : ""}${spine}`}
       onClick={onOpen}
       {...attributes}
       {...listeners}
