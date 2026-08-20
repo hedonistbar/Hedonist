@@ -579,7 +579,9 @@ export function BoardScreen({
         <button className="icon-btn" onClick={onBack}>
           ← Доски
         </button>
-        <h1 style={{ fontSize: 18 }}>{boardName}</h1>
+        <h1 className="display-title" style={{ fontSize: 22 }}>
+          {boardName}
+        </h1>
         <div style={{ display: "flex", gap: 8 }}>
           <ThemeToggle />
           <button className="icon-btn" onClick={() => setShowBackground(true)}>
