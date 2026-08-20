@@ -20,10 +20,10 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { title: "Taskboard", body: event.data.text() };
+    payload = { title: "Ivchenko Hub", body: event.data.text() };
   }
   event.waitUntil(
-    self.registration.showNotification(payload.title ?? "Taskboard", {
+    self.registration.showNotification(payload.title ?? "Ivchenko Hub", {
       body: payload.body,
       tag: payload.tag,
       icon: "/Hedonist/taskboard/icons/icon-192.png",

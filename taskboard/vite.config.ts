@@ -21,8 +21,8 @@ export default defineConfig({
       },
       includeAssets: ["icons/apple-touch-icon.png"],
       manifest: {
-        name: "Taskboard",
-        short_name: "Taskboard",
+        name: "Ivchenko Hub",
+        short_name: "Ivchenko Hub",
         description: "Личный таск-менеджер: доски, списки, карточки",
         theme_color: "#000000",
         background_color: "#000000",

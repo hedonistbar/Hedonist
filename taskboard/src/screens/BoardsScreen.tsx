@@ -63,7 +63,7 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
     <div className="boards-screen">
       <div className="topbar">
         <div className="brand">
-          <span className="eyebrow">TASKBOARD</span>
+          <span className="eyebrow">IVCHENKO HUB</span>
           <h1>Мои доски</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>

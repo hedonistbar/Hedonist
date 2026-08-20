@@ -109,7 +109,7 @@ export function ShareModal({
               />
             </div>
             <p className="sub" style={{ marginBottom: 12 }}>
-              Человек должен сначала зарегистрироваться в Taskboard с этим email.
+              Человек должен сначала зарегистрироваться в Ivchenko Hub с этим email.
             </p>
             {error && (
               <div className="error-text" style={{ marginBottom: 12 }}>

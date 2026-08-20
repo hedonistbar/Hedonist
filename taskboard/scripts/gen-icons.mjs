@@ -24,7 +24,7 @@ function svg({ size, padding = 0 }) {
     font-weight="700"
     font-size="${inner * 0.5}"
     fill="#ffffff"
-  >TB</text>
+  >IH</text>
 </svg>`;
 }
 

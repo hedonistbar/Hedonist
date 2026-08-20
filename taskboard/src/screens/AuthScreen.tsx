@@ -34,7 +34,7 @@ export function AuthScreen() {
     <div className="center-screen">
       <div className="card" style={{ width: "100%", maxWidth: 380 }}>
         <h2>{mode === "signin" ? "Вход" : "Регистрация"}</h2>
-        <p className="sub">Taskboard — личный таск-менеджер</p>
+        <p className="sub">Ivchenko Hub — личный таск-менеджер</p>
 
         {confirmNotice ? (
           <div className="notice">
