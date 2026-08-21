@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
-import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
+import { disablePush, enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
 import { BottomTabBar, type MobileTab } from "../components/BottomTabBar";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
@@ -45,13 +45,22 @@ function NewCardModal({
   const listsForBoard = useMemo(() => lists.filter((l) => l.board_id === boardId), [lists, boardId]);
   const [listId, setListId] = useState(listsForBoard[0]?.id ?? "");
   const [title, setTitle] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueChoice, setDueChoice] = useState<"today" | "tomorrow" | "nextWeek" | "none">("none");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setListId(lists.find((l) => l.board_id === boardId)?.id ?? "");
   }, [boardId, lists]);
+
+  function dueDateFor(choice: typeof dueChoice): string | null {
+    if (choice === "none") return null;
+    const d = new Date();
+    d.setHours(18, 0, 0, 0);
+    if (choice === "tomorrow") d.setDate(d.getDate() + 1);
+    if (choice === "nextWeek") d.setDate(d.getDate() + 7);
+    return d.toISOString();
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -62,7 +71,7 @@ function NewCardModal({
       board_id: boardId,
       list_id: listId,
       title: title.trim(),
-      due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      due_date: dueDateFor(dueChoice),
       position: 0,
     });
     setSaving(false);
@@ -113,37 +122,55 @@ function NewCardModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
-          <div className="info-card" style={{ marginTop: 16 }}>
-            <div className="info-row">
-              <span className="info-row-label">Доска</span>
-              <select className="info-row-select" value={boardId} onChange={(e) => setBoardId(e.target.value)}>
-                {boardsWithLists.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="info-row">
-              <span className="info-row-label">Список</span>
-              <select className="info-row-select" value={listId} onChange={(e) => setListId(e.target.value)}>
-                {listsForBoard.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="info-row">
-              <span className="info-row-label">Срок</span>
-              <input
-                type="datetime-local"
-                className="info-row-input"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
+          <div className="section-label">Доска</div>
+          <div className="picker-row">
+            {boardsWithLists.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                className={`picker-chip${boardId === b.id ? " active" : ""}`}
+                onClick={() => setBoardId(b.id)}
+              >
+                {b.name}
+              </button>
+            ))}
           </div>
+
+          <div className="section-label">Список</div>
+          <div className="picker-row">
+            {listsForBoard.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                className={`picker-chip${listId === l.id ? " active" : ""}`}
+                onClick={() => setListId(l.id)}
+              >
+                {l.title}
+              </button>
+            ))}
+          </div>
+
+          <div className="section-label">Срок</div>
+          <div className="picker-row">
+            {(
+              [
+                ["today", "Сегодня"],
+                ["tomorrow", "Завтра"],
+                ["nextWeek", "На след. неделе"],
+                ["none", "Без срока"],
+              ] as const
+            ).map(([choice, label]) => (
+              <button
+                key={choice}
+                type="button"
+                className={`picker-chip${dueChoice === choice ? " active" : ""}`}
+                onClick={() => setDueChoice(choice)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <button className="mark-complete-btn incomplete" type="submit" disabled={saving || !title.trim()}>
             {saving ? "Сохраняем…" : "Создать"}
           </button>
@@ -253,11 +280,16 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
     load();
   }
 
-  async function handleEnablePush() {
+  async function handleTogglePush() {
     setPushBusy(true);
-    const result = await enablePush();
+    if (pushStatus === "subscribed") {
+      await disablePush();
+      setPushStatus("unsubscribed");
+    } else {
+      const result = await enablePush();
+      if (result.ok) setPushStatus("subscribed");
+    }
     setPushBusy(false);
-    if (result.ok) setPushStatus("subscribed");
   }
 
   if (loading) return <div className="spinner-screen">Загрузка…</div>;
@@ -312,7 +344,7 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
           email={email}
           pushStatus={pushStatus}
           pushBusy={pushBusy}
-          onEnablePush={handleEnablePush}
+          onTogglePush={handleTogglePush}
           onOpenAiSettings={() => setAiSettingsOpen(true)}
           onSignOut={() => supabase.auth.signOut()}
         />

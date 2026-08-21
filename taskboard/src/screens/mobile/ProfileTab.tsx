@@ -6,14 +6,14 @@ export function ProfileTab({
   email,
   pushStatus,
   pushBusy,
-  onEnablePush,
+  onTogglePush,
   onOpenAiSettings,
   onSignOut,
 }: {
   email: string | null;
   pushStatus: PushStatus;
   pushBusy: boolean;
-  onEnablePush: () => void;
+  onTogglePush: () => void;
   onOpenAiSettings: () => void;
   onSignOut: () => void;
 }) {
@@ -47,15 +47,21 @@ export function ProfileTab({
       <div className="info-card">
         <div className="info-row">
           <span className="info-row-label">Уведомления</span>
-          {pushStatus === "subscribed" ? (
-            <span className="info-row-value-group" style={{ color: "var(--success)", fontWeight: 600 }}>
-              Включены
-            </span>
-          ) : pushStatus === "unsupported" ? (
+          {pushStatus === "unsupported" ? (
             <span className="info-row-label">Не поддерживаются</span>
+          ) : pushStatus === "denied" ? (
+            <span className="info-row-label">Заблокированы в браузере</span>
           ) : (
-            <button className="text-link-muted" onClick={onEnablePush} disabled={pushBusy}>
-              {pushBusy ? "…" : pushStatus === "denied" ? "Заблокированы" : "Включить"}
+            <button
+              type="button"
+              className={`notif-toggle${pushStatus === "subscribed" ? " on" : ""}`}
+              onClick={onTogglePush}
+              disabled={pushBusy}
+              role="switch"
+              aria-checked={pushStatus === "subscribed"}
+              aria-label="Уведомления"
+            >
+              <span className="notif-toggle-knob" />
             </button>
           )}
         </div>
