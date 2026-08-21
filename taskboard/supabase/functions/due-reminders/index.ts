@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3";
+import { sendApnsNotification, type ApnsConfig } from "../_shared/apns.ts";
 
 // Triggered on a schedule by pg_cron (see migrations/0004_due_reminders_cron.sql).
 // Not authenticated by end-user JWT (cron has none) so it checks a shared
@@ -25,6 +26,10 @@ Deno.serve(async (req) => {
   }
 
   webpush.setVapidDetails(vapid.subject, vapid.public_key, vapid.private_key);
+
+  const { data: apnsConfigData } = await client.rpc("get_apns_config");
+  const apnsConfig = apnsConfigData as ApnsConfig | null;
+  const apnsReady = !!(apnsConfig?.auth_key && apnsConfig?.key_id && apnsConfig?.team_id && apnsConfig?.bundle_id);
 
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -85,6 +90,34 @@ Deno.serve(async (req) => {
         );
         if (toDelete.length) {
           await client.from("push_subscriptions").delete().in("endpoint", toDelete);
+        }
+      }
+
+      if (apnsReady) {
+        const { data: nativeTokens } = await client
+          .from("native_push_tokens")
+          .select("platform, token")
+          .in("user_id", targetUserIds);
+
+        if (nativeTokens && nativeTokens.length > 0) {
+          const overdue = new Date(card.due_date as string) < now;
+          const title = overdue ? "Просрочено" : "Скоро дедлайн";
+          const body = card.title as string;
+          const tag = `due-${card.id}`;
+          const url = "/Hedonist/taskboard/";
+
+          const toDeleteTokens: string[] = [];
+          await Promise.allSettled(
+            nativeTokens.map(async (t: { platform: string; token: string }) => {
+              if (t.platform !== "ios") return;
+              const result = await sendApnsNotification(apnsConfig!, t.token, { title, body, tag, url });
+              if (result.ok) sentCount++;
+              else if (result.shouldRemoveToken) toDeleteTokens.push(t.token);
+            }),
+          );
+          if (toDeleteTokens.length) {
+            await client.from("native_push_tokens").delete().in("token", toDeleteTokens);
+          }
         }
       }
     }
