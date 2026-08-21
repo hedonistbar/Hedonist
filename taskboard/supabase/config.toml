@@ -1,0 +1,17 @@
+# Edge Functions that must be reachable without a Supabase user JWT — the
+# caller isn't a signed-in browser session for these:
+#   - due-reminders: invoked by pg_cron, authenticated via its own
+#     x-cron-secret header instead (see migrations/0004).
+#   - google-calendar-auth: its callback path is hit directly by Google's
+#     OAuth redirect, which carries no Supabase JWT (see migrations/0008 and
+#     supabase/functions/google-calendar-auth). The authorize path within
+#     the same function verifies the JWT itself in code.
+#
+# If deploying manually via the dashboard instead of `supabase functions
+# deploy`, toggle "Enforce JWT Verification" off for both functions there.
+
+[functions.due-reminders]
+verify_jwt = false
+
+[functions.google-calendar-auth]
+verify_jwt = false

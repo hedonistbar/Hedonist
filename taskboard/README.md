@@ -27,6 +27,12 @@ Supabase-база, свой набор таблиц, ничего общего �
   без слепого автозапуска: вы решаете, что из ответа применить. Один общий
   Anthropic API-ключ на всё приложение — задаётся один раз в настройках
   («✨ ИИ» на экране «Мои доски»), хранится зашифрованным в Vault.
+- 📅 Google Calendar (настоящая интеграция, не заглушка): подключите свой
+  аккаунт («Google Calendar» в профиле / «📅 Google Calendar» на «Мои доски»)
+  — события на ближайшие 14 дней показываются на вкладке «Календарь» рядом с
+  задачами, отдельным пунктирным блоком «Из Google Calendar». Требует
+  разовой настройки Google Cloud-проекта (см. «Настройка» ниже) — своя
+  учётная запись подключается потом одной кнопкой каждым из вас отдельно.
 - Фон доски — 7 фирменных градиентов на палитре Pantone 2026 (Cloud Dancer,
   Александрит, Мандарин и др.) или своя фотография («Фон» в шапке доски).
 - 🌗/☀️/🌙 переключатель темы (как в системе / светлая / тёмная), запоминается.
@@ -84,6 +90,32 @@ API — платное согласно тарифам Anthropic, ключ и е
 
 До этого шага нативное приложение всё равно можно собрать и поставить на
 телефон — просто push туда не будет доходить (шлётся молча, без ошибки).
+
+**Google Calendar** — бесплатно (в отличие от Apple), но тоже требует
+разовой настройки своего Google Cloud-проекта:
+
+1. Выполните `migrations/0008_google_calendar.sql` в SQL Editor.
+2. Задеплойте `supabase/functions/google-calendar-auth` и
+   `supabase/functions/google-calendar-events`. Для `google-calendar-auth`
+   обязательно выключите проверку JWT (`supabase functions deploy
+   google-calendar-auth --no-verify-jwt`, либо через Supabase CLI подтянется
+   само из `supabase/config.toml`, либо вручную в дашборде — Edge Functions →
+   google-calendar-auth → Details → «Enforce JWT Verification» выключить) —
+   иначе не сработает callback от Google, у которого нет вашего JWT.
+3. [console.cloud.google.com](https://console.cloud.google.com) → создайте
+   проект → APIs & Services → включите **Google Calendar API** → Credentials
+   → Create Credentials → OAuth client ID → тип «Web application» → Authorized
+   redirect URIs: `<ваш Supabase URL>/functions/v1/google-calendar-auth`.
+4. APIs & Services → OAuth consent screen → оставьте статус публикации
+   **Testing** и добавьте оба ваших email в «Test users» — так не понадобится
+   проходить недельную проверку Google (при 100 тестовых пользователях лимита
+   вам за глаза хватит на двоих).
+5. Откройте приложение → «Профиль» (или «📅 Google Calendar» на «Мои доски»
+   на десктопе) → вставьте Client ID и Client Secret из шага 3 → «Сохранить».
+6. Каждый из вас затем жмёт «Подключить Google Calendar» там же — откроется
+   стандартное окно согласия Google, после него вернёт обратно в приложение.
+
+После этого события ближайших 14 дней появятся на вкладке «Календарь».
 
 Если захотите пересадить приложение на свой собственный Supabase-проект:
 
@@ -168,6 +200,12 @@ apple.com/programs с любым Apple ID). Без него нативную с�
 4. Настройте APNs (см. «Настройка» выше) — иначе push из шага 3 придут в
    PWA-версии, но не в нативном приложении.
 
+Apple Calendar (EventKit) пока не подключён — это отдельный шаг поверх
+готовой Capacitor-обёртки (нужен плагин вроде `@ebarooni/capacitor-calendar`
+и реальный запуск на устройстве для проверки), в отличие от Google Calendar
+не работает из веба вообще ни в каком виде — это ограничение iOS/Safari, а
+не этого проекта.
+
 ## Деплой на GitHub Pages
 
 Пуш в `main` или `claude/trello-like-task-app-sdlxis`, который затрагивает
@@ -186,12 +224,13 @@ workflow параллельно собирает и `app/` (Hedonist AI-marketer
 
 ```
 taskboard/
-  migrations/                 Схема БД, RLS, RPC — по порядку, 0001 → 0007
-  supabase/functions/         send-push (пинг при назначении), due-reminders (cron), ai-chat (ИИ-ассистент)
+  migrations/                 Схема БД, RLS, RPC — по порядку, 0001 → 0008
+  supabase/functions/         send-push, due-reminders (cron), ai-chat, google-calendar-auth, google-calendar-events
   supabase/functions/_shared/ apns.ts — минимальный клиент APNs (без npm-зависимостей)
-  src/lib/                     Supabase-клиент, авторизация, типы, push (Web + нативный), ии, фоны
+  supabase/config.toml        verify_jwt=false для due-reminders и google-calendar-auth
+  src/lib/                     Supabase-клиент, авторизация, типы, push (Web + нативный), ии, google-календарь, фоны
   src/screens/                 AuthScreen, BoardsScreen, BoardScreen, MobileApp (мобильная навигация)
-  src/components/              CardModal, CardAIPanel, AISettingsModal, ShareModal, BackgroundModal
+  src/components/              CardModal, CardAIPanel, AISettingsModal, GoogleCalendarSettingsModal, ShareModal, BackgroundModal
   src/sw.ts                    Service worker (кастомный, обрабатывает push)
   capacitor.config.ts, ios/    Нативная iOS-обёртка (см. «Настоящее приложение для iPhone»)
 ```
@@ -205,6 +244,9 @@ taskboard/
 ИИ-ассистентом по карточке). `push_subscriptions` — одна запись на
 браузер/устройство с включёнными Web Push-уведомлениями (PWA),
 `native_push_tokens` — то же самое для нативного iOS-приложения (APNs).
-Всё под Row Level Security:
-видно и редактируемо только участникам конкретной доски. Anthropic
-API-ключ ИИ-ассистента — не в таблице, а в Supabase Vault (см. «Настройка»).
+`google_calendar_tokens` — refresh/access токен на пользователя (только
+service role, наружу — только статус «подключено»/нет через RPC),
+`google_oauth_states` — короткоживущие одноразовые записи для CSRF-защиты
+OAuth-редиректа. Всё под Row Level Security: видно и редактируемо только
+участникам конкретной доски. Anthropic API-ключ ИИ-ассистента и Google
+Client ID/Secret — не в таблицах, а в Supabase Vault (см. «Настройка»).

@@ -1446,3 +1446,34 @@ input.urgency-overdue {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Google Calendar events (read-only, external — dashed border sets them
+   apart from the app's own editable task rows) */
+/* ---------------------------------------------------------------------- */
+.gcal-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gcal-event-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.4);
+}
+.gcal-event-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+.gcal-event-title {
+  font-size: 15px;
+  font-weight: 560;
+  color: var(--text);
+}

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { enablePush, getPushStatus, isPushSupported, type PushStatus } from "../lib/push";
 import { AISettingsModal } from "../components/AISettingsModal";
+import { GoogleCalendarSettingsModal } from "../components/GoogleCalendarSettingsModal";
 import { Logo } from "../components/Logo";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { swatchColor } from "../lib/swatchColor";
@@ -19,6 +20,7 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
   const [pushStatus, setPushStatus] = useState<PushStatus>("unsubscribed");
   const [pushBusy, setPushBusy] = useState(false);
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
+  const [googleSettingsOpen, setGoogleSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (isPushSupported()) getPushStatus().then(setPushStatus);
@@ -91,6 +93,9 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
           <button className="icon-btn" onClick={() => setAiSettingsOpen(true)}>
             ✨ ИИ
           </button>
+          <button className="icon-btn" onClick={() => setGoogleSettingsOpen(true)}>
+            📅 Google Calendar
+          </button>
           <button className="icon-btn" onClick={() => supabase.auth.signOut()}>
             Выйти
           </button>
@@ -98,6 +103,7 @@ export function BoardsScreen({ onOpenBoard }: { onOpenBoard: (board: Board) => v
       </div>
 
       {aiSettingsOpen && <AISettingsModal onClose={() => setAiSettingsOpen(false)} />}
+      {googleSettingsOpen && <GoogleCalendarSettingsModal onClose={() => setGoogleSettingsOpen(false)} />}
 
       <main className="content">
         <div style={{ marginBottom: 22 }}>

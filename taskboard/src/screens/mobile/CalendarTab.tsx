@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { swatchColor } from "../../lib/swatchColor";
 import { TaskRow } from "../../components/TaskRow";
 import type { Board, BoardMember, Card } from "../../lib/database.types";
+import type { GoogleCalendarEvent } from "../../lib/googleCalendar";
 
 type Progress = { done: number; total: number };
 
@@ -15,6 +16,7 @@ export function CalendarTab({
   members,
   progressByCard,
   attachmentCounts,
+  googleEvents,
   onOpenCard,
   onToggleDone,
 }: {
@@ -23,6 +25,7 @@ export function CalendarTab({
   members: BoardMember[];
   progressByCard: Record<string, Progress>;
   attachmentCounts: Record<string, number>;
+  googleEvents: GoogleCalendarEvent[];
   onOpenCard: (card: Card) => void;
   onToggleDone: (card: Card) => void;
 }) {
@@ -53,6 +56,11 @@ export function CalendarTab({
   }
 
   const dayTasks = cardsByDay[selected] ?? [];
+
+  const dayGoogleEvents = useMemo(
+    () => googleEvents.filter((e) => dateKey(new Date(e.start)) === selected),
+    [googleEvents, selected],
+  );
 
   return (
     <div className="mobile-tab-content">
@@ -103,6 +111,22 @@ export function CalendarTab({
           })
         )}
       </div>
+
+      {dayGoogleEvents.length > 0 && (
+        <>
+          <div className="section-label">Из Google Calendar</div>
+          <div className="gcal-event-list">
+            {dayGoogleEvents.map((e) => (
+              <div key={e.id} className="gcal-event-row">
+                <span className="gcal-event-time">
+                  {e.allDay ? "весь день" : new Date(e.start).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span className="gcal-event-title">{e.title}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

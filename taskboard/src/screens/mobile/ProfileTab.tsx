@@ -8,6 +8,7 @@ export function ProfileTab({
   pushBusy,
   onTogglePush,
   onOpenAiSettings,
+  onOpenGoogleCalendarSettings,
   onSignOut,
 }: {
   email: string | null;
@@ -15,6 +16,7 @@ export function ProfileTab({
   pushBusy: boolean;
   onTogglePush: () => void;
   onOpenAiSettings: () => void;
+  onOpenGoogleCalendarSettings: () => void;
   onSignOut: () => void;
 }) {
   return (
@@ -69,6 +71,12 @@ export function ProfileTab({
           <span className="info-row-label">ИИ-ассистент</span>
           <button className="text-link-muted" onClick={onOpenAiSettings}>
             Настроить ключ
+          </button>
+        </div>
+        <div className="info-row">
+          <span className="info-row-label">Google Calendar</span>
+          <button className="text-link-muted" onClick={onOpenGoogleCalendarSettings}>
+            Настроить
           </button>
         </div>
       </div>

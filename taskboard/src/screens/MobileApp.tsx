@@ -6,6 +6,8 @@ import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
 import { BackgroundModal } from "../components/BackgroundModal";
 import { AISettingsModal } from "../components/AISettingsModal";
+import { GoogleCalendarSettingsModal } from "../components/GoogleCalendarSettingsModal";
+import { fetchGoogleCalendarEvents, hasGoogleCalendarConnected, type GoogleCalendarEvent } from "../lib/googleCalendar";
 import { Logo } from "../components/Logo";
 import { HomeTab } from "./mobile/HomeTab";
 import { ProjectsTab } from "./mobile/ProjectsTab";
@@ -195,6 +197,8 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
   const [shareBoard, setShareBoard] = useState<Board | null>(null);
   const [backgroundBoard, setBackgroundBoard] = useState<Board | null>(null);
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
+  const [googleSettingsOpen, setGoogleSettingsOpen] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
   const [pushStatus, setPushStatus] = useState<PushStatus>("unsubscribed");
   const [pushBusy, setPushBusy] = useState(false);
 
@@ -239,6 +243,24 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
   useEffect(() => {
     if (isPushSupported()) getPushStatus().then(setPushStatus);
   }, []);
+
+  const loadGoogleEvents = useCallback(async () => {
+    const connected = await hasGoogleCalendarConnected();
+    if (!connected) {
+      setGoogleEvents([]);
+      return;
+    }
+    const result = await fetchGoogleCalendarEvents();
+    setGoogleEvents(result.events);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("google_calendar") === "connected") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    loadGoogleEvents();
+  }, [loadGoogleEvents]);
 
   const boardById = useMemo(() => new Map(boards.map((b) => [b.id, b])), [boards]);
 
@@ -335,6 +357,7 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
           members={members}
           progressByCard={progressByCard}
           attachmentCounts={attachmentCounts}
+          googleEvents={googleEvents}
           onOpenCard={setSelectedCard}
           onToggleDone={toggleCardDone}
         />
@@ -346,6 +369,7 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
           pushBusy={pushBusy}
           onTogglePush={handleTogglePush}
           onOpenAiSettings={() => setAiSettingsOpen(true)}
+          onOpenGoogleCalendarSettings={() => setGoogleSettingsOpen(true)}
           onSignOut={() => supabase.auth.signOut()}
         />
       )}
@@ -402,6 +426,15 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
       )}
 
       {aiSettingsOpen && <AISettingsModal onClose={() => setAiSettingsOpen(false)} />}
+
+      {googleSettingsOpen && (
+        <GoogleCalendarSettingsModal
+          onClose={() => {
+            setGoogleSettingsOpen(false);
+            loadGoogleEvents();
+          }}
+        />
+      )}
     </div>
   );
 }

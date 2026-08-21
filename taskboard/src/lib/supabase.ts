@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 // `||` (not `??`) on purpose: an unset build-time env var can come through
 // as an empty string rather than undefined (e.g. a GitHub Actions secret
 // that doesn't exist evaluates to ""), which `??` wouldn't fall back on.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://yihpqinsjcaknxngnssp.supabase.co";
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://yihpqinsjcaknxngnssp.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_n_GmzQ7IVD-tk-0iIjrdWw_JV5nBepu";
 
