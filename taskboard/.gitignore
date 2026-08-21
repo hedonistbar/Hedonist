@@ -23,3 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# iOS (Capacitor)
+ios/App/Pods
+ios/App/build
+ios/App/DerivedData
+ios/App/App/public
+ios/.xcode.env.local
+**/xcuserdata/
