@@ -98,6 +98,57 @@
   --blob-blend: screen;
 }
 
+/* "Girls" — boho-chic, "Breakfast at Tiffany's"-inspired third theme from
+   the design reference: warm ivory + muted Tiffany teal, an animated
+   drifting gradient background, and a sparkle-burst micro-interaction
+   on task completion (see sparkle.ts). */
+:root[data-theme="girls"] {
+  --ground: linear-gradient(120deg, #fbf6ec 0%, #f3e3d3 22%, #d9ece7 48%, #f6e7dc 72%, #fbf6ec 100%);
+  --surface: #fffcf6;
+  --surface-rgb: 255, 252, 246;
+  --surface-2: #f6efe0;
+  --border: rgba(178, 140, 70, 0.22);
+  --text: #2b241f;
+  --text-muted: rgba(43, 36, 31, 0.58);
+  --accent: oklch(52% 0.06 195);
+  --accent-strong: color-mix(in oklch, oklch(52% 0.06 195), black 15%);
+  --accent-soft: color-mix(in oklch, oklch(52% 0.06 195), white 88%);
+  --success: oklch(52% 0.07 165);
+  --success-bg: color-mix(in oklch, oklch(52% 0.07 165), white 88%);
+  --danger: oklch(56% 0.15 30);
+  --danger-bg: oklch(93% 0.045 30);
+  --warning: oklch(66% 0.1 75);
+  --warning-bg: oklch(94% 0.04 80);
+  --overdue: oklch(56% 0.15 30);
+  --shadow: 0 1px 3px rgba(70, 50, 20, 0.09), 0 10px 30px -12px rgba(70, 50, 20, 0.16);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --blob-1: oklch(83% 0.07 195);
+  --blob-2: oklch(87% 0.09 80);
+  --blob-3: oklch(88% 0.06 20);
+  --blob-opacity: 0.6;
+  --blob-blend: normal;
+}
+@keyframes bohoDrift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+:root[data-theme="girls"] body {
+  background-size: 400% 400%;
+  animation: bohoDrift 22s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="girls"] body {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

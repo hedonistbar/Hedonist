@@ -882,6 +882,33 @@ input.urgency-overdue {
   font-weight: 700;
 }
 
+.sparkle-star {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  animation: sparkleRise 0.95s ease-out forwards;
+}
+@keyframes sparkleRise {
+  0% {
+    transform: translateY(0) scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(-14px) scale(1) rotate(20deg);
+  }
+  100% {
+    transform: translateY(-100px) scale(0.85) rotate(70deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sparkle-star {
+    animation: none;
+    display: none;
+  }
+}
+
 .profile-avatar {
   flex: none;
   width: 52px;

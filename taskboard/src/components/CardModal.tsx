@@ -4,6 +4,7 @@ import { dueUrgency } from "../lib/dueUrgency";
 import { notifyCardAssigned } from "../lib/push";
 import { CardAIPanel } from "./CardAIPanel";
 import { swatchColor } from "../lib/swatchColor";
+import { triggerSparkleBurst } from "../lib/sparkle";
 import type { Attachment, BoardMember, Card, ChecklistItem, List } from "../lib/database.types";
 
 function toDatetimeLocal(iso: string | null): string {
@@ -195,7 +196,10 @@ export function CardModal({
         <button
           type="button"
           className={`mark-complete-btn${isDone ? " complete" : " incomplete"}`}
-          onClick={toggleDone}
+          onClick={(e) => {
+            if (!isDone) triggerSparkleBurst(e.clientX, e.clientY);
+            toggleDone();
+          }}
         >
           {isDone ? "Отметить как невыполненную" : "Отметить как выполненную"}
         </button>

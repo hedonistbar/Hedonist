@@ -1,6 +1,7 @@
 import { dueUrgency } from "../lib/dueUrgency";
 import { formatDueDate } from "../lib/dueBucket";
 import { initials } from "../lib/initials";
+import { triggerSparkleBurst } from "../lib/sparkle";
 import type { BoardMember, Card } from "../lib/database.types";
 
 type Progress = { done: number; total: number };
@@ -38,6 +39,7 @@ export function TaskRow({
         className={`card-checkbox${card.is_done ? " checked" : ""}`}
         onClick={(e) => {
           e.stopPropagation();
+          if (!card.is_done) triggerSparkleBurst(e.clientX, e.clientY);
           onToggleDone();
         }}
         aria-label={card.is_done ? "Отметить как невыполненную" : "Отметить как выполненную"}

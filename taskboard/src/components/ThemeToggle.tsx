@@ -5,6 +5,7 @@ const OPTIONS: { pref: ThemePreference; icon: string; label: string }[] = [
   { pref: "system", icon: "🌗", label: "Авто" },
   { pref: "light", icon: "☀️", label: "Светлая" },
   { pref: "dark", icon: "🌙", label: "Тёмная" },
+  { pref: "girls", icon: "✨", label: "Girls" },
 ];
 
 /** A segmented chip row, matching the design reference's THEME picker,

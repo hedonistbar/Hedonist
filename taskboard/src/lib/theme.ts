@@ -1,10 +1,10 @@
-export type ThemePreference = "system" | "light" | "dark";
+export type ThemePreference = "system" | "light" | "dark" | "girls";
 
 const STORAGE_KEY = "ivchenko-theme";
 
 export function getStoredTheme(): ThemePreference {
   const v = localStorage.getItem(STORAGE_KEY);
-  return v === "light" || v === "dark" ? v : "system";
+  return v === "light" || v === "dark" || v === "girls" ? v : "system";
 }
 
 export function setStoredTheme(pref: ThemePreference): void {

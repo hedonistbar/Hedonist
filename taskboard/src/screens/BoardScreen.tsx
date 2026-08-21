@@ -23,6 +23,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
 import { formatDueDate } from "../lib/dueBucket";
+import { triggerSparkleBurst } from "../lib/sparkle";
 import { backgroundCss, getBoardBackgroundImageUrl } from "../lib/backgrounds";
 import { initials } from "../lib/initials";
 import { CardModal } from "../components/CardModal";
@@ -68,6 +69,7 @@ function CardFace({
         className={`card-checkbox${card.is_done ? " checked" : ""}`}
         onClick={(e) => {
           e.stopPropagation();
+          if (!card.is_done) triggerSparkleBurst(e.clientX, e.clientY);
           onToggleDone();
         }}
         aria-label={card.is_done ? "Отметить как невыполненную" : "Отметить как выполненную"}
