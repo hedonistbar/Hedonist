@@ -734,6 +734,168 @@ input.urgency-overdue {
   transform: rotate(180deg);
 }
 
+/* ---------------------------------------------------------------------- */
+/* Mobile bottom tab bar — the actual navigation structure from the design
+   reference (Home/Projects/Calendar/Profile), not a skin over the board. */
+/* ---------------------------------------------------------------------- */
+.tab-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(var(--surface-rgb), 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  z-index: 30;
+}
+.tab-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  padding: 6px 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tab-bar-item.active {
+  color: var(--accent);
+}
+.tab-bar-icon {
+  display: flex;
+}
+.tab-bar-label {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Mobile app shell — Home/Projects/Calendar/Profile screens. */
+/* ---------------------------------------------------------------------- */
+.mobile-app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-tab-content {
+  flex: 1;
+  padding: 8px 20px 110px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.mobile-tab-header {
+  margin: 6px 0 18px;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.05);
+}
+.filter-pill span {
+  color: var(--text-muted);
+}
+
+.fab {
+  position: fixed;
+  right: 22px;
+  bottom: calc(104px + env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(20, 20, 40, 0.28);
+  z-index: 25;
+}
+.fab:active {
+  transform: scale(0.94);
+}
+
+.cal-day-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.cal-day-chip {
+  flex: none;
+  width: 46px;
+  height: 58px;
+  border-radius: 16px;
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.05);
+}
+.cal-day-chip.today {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.cal-day-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+.cal-day-weekday {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.cal-day-num {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.profile-avatar {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
 .new-list-form {
   flex: 0 0 268px;
 }

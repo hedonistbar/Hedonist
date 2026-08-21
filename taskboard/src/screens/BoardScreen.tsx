@@ -22,10 +22,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "../lib/supabase";
 import { dueUrgency } from "../lib/dueUrgency";
+import { formatDueDate } from "../lib/dueBucket";
 import { backgroundCss, getBoardBackgroundImageUrl } from "../lib/backgrounds";
 import { initials } from "../lib/initials";
-import { useIsMobile } from "../lib/useIsMobile";
-import { swatchColor } from "../lib/swatchColor";
 import { CardModal } from "../components/CardModal";
 import { ShareModal } from "../components/ShareModal";
 import { BackgroundModal } from "../components/BackgroundModal";
@@ -33,27 +32,6 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import type { Board, BoardMember, Card, ChecklistItem, List } from "../lib/database.types";
 
 type Progress = { done: number; total: number };
-type ViewMode = "board" | "list";
-type DueBucket = "overdue" | "today" | "upcoming" | "someday";
-
-function formatDueDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
-
-/** Groups an active (not done) card the way the reference Home screen
- * does: by calendar day relative to today, not just dueUrgency's
- * overdue/today/soon flag (which only flags the next couple of days). */
-function dueBucket(card: Card): DueBucket {
-  if (!card.due_date) return "someday";
-  const due = new Date(card.due_date);
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfDueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-  if (startOfDueDay < startOfToday) return "overdue";
-  if (startOfDueDay.getTime() === startOfToday.getTime()) return "today";
-  return "upcoming";
-}
 
 function CardFace({
   card,
@@ -115,89 +93,6 @@ function CardFace({
             </span>
           )}
         </div>
-        {(card.due_date || progress || attachCount > 0) && (
-          <div className="card-face-meta">
-            {card.due_date && (
-              <span className={`badge${urgency ? ` urgency-${urgency}` : ""}`}>
-                🕐 {formatDueDate(card.due_date)}
-              </span>
-            )}
-            {progress && (
-              <span className="badge">
-                ☑ {progress.done}/{progress.total}
-              </span>
-            )}
-            {attachCount > 0 && <span className="badge">📎 {attachCount}</span>}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Same visual language as CardFace (shares its CSS classes), but for the
- * flat "Список" view: no dnd-kit sortable wiring (nothing to reorder
- * there), and shows the card's list as a small tag since flattening the
- * board loses that grouping. */
-function TaskRow({
-  card,
-  listId,
-  listTitle,
-  progress,
-  attachCount,
-  assignee,
-  onOpen,
-  onToggleDone,
-}: {
-  card: Card;
-  listId: string;
-  listTitle: string;
-  progress: Progress | undefined;
-  attachCount: number;
-  assignee: BoardMember | null;
-  onOpen: () => void;
-  onToggleDone: () => void;
-}) {
-  const urgency = dueUrgency(card.due_date, card.is_done);
-
-  return (
-    <div className={`card-face${card.is_done ? " done" : ""}`} onClick={onOpen}>
-      <button
-        type="button"
-        className={`card-checkbox${card.is_done ? " checked" : ""}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleDone();
-        }}
-        aria-label={card.is_done ? "Отметить как невыполненную" : "Отметить как выполненную"}
-      >
-        {card.is_done && (
-          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-            <path
-              d="M1 5l3.2 3.2L11 1"
-              stroke="#fff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
-      <div className="card-face-body">
-        <div className="card-face-top">
-          <span className="card-face-title">{card.title}</span>
-          {assignee && (
-            <span className="avatar" title={assignee.display_name ?? undefined}>
-              {initials(assignee.display_name)}
-            </span>
-          )}
-        </div>
-        {listTitle && (
-          <span className="task-row-list-tag">
-            <span className="task-row-list-dot" style={{ background: swatchColor(listId) }} />
-            {listTitle}
-          </span>
-        )}
         {(card.due_date || progress || attachCount > 0) && (
           <div className="card-face-meta">
             {card.due_date && (
@@ -324,13 +219,6 @@ export function BoardScreen({
   const [newCardTitle, setNewCardTitle] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<"card" | "list" | null>(null);
-  const [showCompletedList, setShowCompletedList] = useState(false);
-  // Touch devices get the flat, tap-friendly "Список" view — dragging cards
-  // between columns is fiddly on a phone. Desktop keeps the kanban board
-  // with drag & drop, where there's room for columns and a mouse to drag
-  // with. Not a manual toggle: it follows the viewport.
-  const isMobile = useIsMobile();
-  const viewMode: ViewMode = isMobile ? "list" : "board";
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -432,20 +320,6 @@ export function BoardScreen({
     }
     return map;
   }, [checklistItems]);
-
-  const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
-
-  const sections = useMemo(() => {
-    const active = cards.filter((c) => !c.is_done);
-    const overdue = active.filter((c) => dueBucket(c) === "overdue");
-    const today = active.filter((c) => dueBucket(c) === "today");
-    const upcoming = active
-      .filter((c) => dueBucket(c) === "upcoming")
-      .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
-    const someday = active.filter((c) => dueBucket(c) === "someday");
-    const completed = cards.filter((c) => c.is_done);
-    return { overdue, today, upcoming, someday, completed };
-  }, [cards]);
 
   const memberById = new Map(members.map((m) => [m.user_id, m]));
   const activeCard = activeType === "card" ? cards.find((c) => c.id === activeId) : null;
@@ -603,117 +477,6 @@ export function BoardScreen({
 
       {error && <div className="error-text" style={{ margin: "8px 16px" }}>{error}</div>}
 
-      {viewMode === "list" ? (
-        <div className="task-list-view">
-          {sections.overdue.length === 0 &&
-          sections.today.length === 0 &&
-          sections.upcoming.length === 0 &&
-          sections.someday.length === 0 &&
-          sections.completed.length === 0 ? (
-            <p className="sub">На этой доске пока нет карточек.</p>
-          ) : (
-            <>
-              {sections.overdue.length > 0 && (
-                <>
-                  <div className="task-section-label danger">Просрочено · {sections.overdue.length}</div>
-                  {sections.overdue.map((card) => (
-                    <TaskRow
-                      key={card.id}
-                      card={card}
-                      listId={card.list_id}
-                      listTitle={listById.get(card.list_id)?.title ?? ""}
-                      progress={progressByCard[card.id]}
-                      attachCount={attachmentCounts[card.id] ?? 0}
-                      assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
-                      onOpen={() => setSelectedCard(card)}
-                      onToggleDone={() => toggleCardDone(card)}
-                    />
-                  ))}
-                </>
-              )}
-              {sections.today.length > 0 && (
-                <>
-                  <div className="task-section-label">Сегодня · {sections.today.length}</div>
-                  {sections.today.map((card) => (
-                    <TaskRow
-                      key={card.id}
-                      card={card}
-                      listId={card.list_id}
-                      listTitle={listById.get(card.list_id)?.title ?? ""}
-                      progress={progressByCard[card.id]}
-                      attachCount={attachmentCounts[card.id] ?? 0}
-                      assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
-                      onOpen={() => setSelectedCard(card)}
-                      onToggleDone={() => toggleCardDone(card)}
-                    />
-                  ))}
-                </>
-              )}
-              {sections.upcoming.length > 0 && (
-                <>
-                  <div className="task-section-label">Предстоящие · {sections.upcoming.length}</div>
-                  {sections.upcoming.map((card) => (
-                    <TaskRow
-                      key={card.id}
-                      card={card}
-                      listId={card.list_id}
-                      listTitle={listById.get(card.list_id)?.title ?? ""}
-                      progress={progressByCard[card.id]}
-                      attachCount={attachmentCounts[card.id] ?? 0}
-                      assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
-                      onOpen={() => setSelectedCard(card)}
-                      onToggleDone={() => toggleCardDone(card)}
-                    />
-                  ))}
-                </>
-              )}
-              {sections.someday.length > 0 && (
-                <>
-                  <div className="task-section-label">Когда-нибудь · {sections.someday.length}</div>
-                  {sections.someday.map((card) => (
-                    <TaskRow
-                      key={card.id}
-                      card={card}
-                      listId={card.list_id}
-                      listTitle={listById.get(card.list_id)?.title ?? ""}
-                      progress={progressByCard[card.id]}
-                      attachCount={attachmentCounts[card.id] ?? 0}
-                      assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
-                      onOpen={() => setSelectedCard(card)}
-                      onToggleDone={() => toggleCardDone(card)}
-                    />
-                  ))}
-                </>
-              )}
-              {sections.completed.length > 0 && (
-                <>
-                  <div
-                    className="task-completed-toggle"
-                    onClick={() => setShowCompletedList((v) => !v)}
-                  >
-                    <span>Выполнено · {sections.completed.length}</span>
-                    <span className={`task-completed-chevron${showCompletedList ? " open" : ""}`}>⌄</span>
-                  </div>
-                  {showCompletedList &&
-                    sections.completed.map((card) => (
-                      <TaskRow
-                        key={card.id}
-                        card={card}
-                        listId={card.list_id}
-                      listTitle={listById.get(card.list_id)?.title ?? ""}
-                        progress={progressByCard[card.id]}
-                        attachCount={attachmentCounts[card.id] ?? 0}
-                        assignee={card.assigned_to ? (memberById.get(card.assigned_to) ?? null) : null}
-                        onOpen={() => setSelectedCard(card)}
-                        onToggleDone={() => toggleCardDone(card)}
-                      />
-                    ))}
-                </>
-              )}
-            </>
-          )}
-        </div>
-      ) : (
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -790,7 +553,6 @@ export function BoardScreen({
           ) : null}
         </DragOverlay>
       </DndContext>
-      )}
 
       {selectedCard && (
         <CardModal
