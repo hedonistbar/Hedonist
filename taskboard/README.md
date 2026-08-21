@@ -66,6 +66,25 @@ API — платное согласно тарифам Anthropic, ключ и е
 
 После этого в «Фон доски» появится кнопка «📷 Своё фото».
 
+**Нативные push для iPhone-приложения** (не для PWA — та работает через
+обычный Web Push и её отдельно включать не нужно) требуют APNs-ключ, который
+можно получить только с платным Apple Developer Program ($99/год):
+
+1. Выполните `migrations/0007_native_push.sql` в SQL Editor.
+2. App Store Connect → Certificates, Identifiers & Profiles → Keys → создайте
+   ключ с возможностью «Apple Push Notifications service», скачайте `.p8`.
+3. Сохраните секреты через Vault (SQL Editor) — `.p8` открывается текстовым
+   редактором, вставьте содержимое файла целиком:
+   ```sql
+   select vault.create_secret('<содержимое .p8 файла>', 'apns_auth_key');
+   select vault.create_secret('<Key ID из App Store Connect>', 'apns_key_id');
+   select vault.create_secret('<Team ID из App Store Connect>', 'apns_team_id');
+   select vault.create_secret('com.ivchenkohub.app', 'apns_bundle_id');
+   ```
+
+До этого шага нативное приложение всё равно можно собрать и поставить на
+телефон — просто push туда не будет доходить (шлётся молча, без ошибки).
+
 Если захотите пересадить приложение на свой собственный Supabase-проект:
 
 1. Создайте проект на [supabase.com](https://supabase.com), выполните
@@ -118,6 +137,37 @@ npm run dev
    на экране «Мои доски») — тогда назначение карточки и приближающиеся
    сроки будут приходить каждому лично.
 
+## Настоящее приложение для iPhone (не PWA)
+
+PWA из раздела выше — это уже полноценный вариант «без App Store», но это
+всё ещё сайт в обёртке Safari. Если нужен именно нативный `.ipa`,
+устанавливаемый как обычное приложение (с настоящими push через APNs и
+доступом к системному календарю), в репозитории есть Capacitor-обёртка
+(`capacitor.config.ts`, `ios/`) — тот же веб-код, скомпилированный в
+нативный iOS-проект.
+
+**Жёсткое ограничение Apple**: собрать и поставить такое приложение на
+физический iPhone — даже только себе и одному члену семьи, без App Store —
+можно только с Apple Developer Program (**платно, $99/год**, оформляется на
+apple.com/programs с любым Apple ID). Без него нативную сборку в принципе
+некуда установить — это ограничение iOS, не этого проекта. Сама разработка
+(этот репозиторий, весь код) остаётся бесплатной.
+
+Как только Apple Developer Program оформлен:
+
+1. Нужен Mac с Xcode (или GitHub Actions на раннере `macos-latest` — можно
+   настроить). Локально: `cd taskboard && npm run build && npx cap sync ios`,
+   затем откройте `ios/App/App.xcworkspace` в Xcode.
+2. В Xcode: Signing & Capabilities → выберите свою команду (Team) из Apple
+   Developer Program, включите capability «Push Notifications».
+3. Product → Archive → Distribute App → **TestFlight** (не App Store) — это
+   самый быстрый способ поставить сборку на 1-2 личных телефона без недель
+   ревью Apple. Добавьте себя и супруга/супругу как тестировщиков в App Store
+   Connect → TestFlight — оба получат приложение через приложение TestFlight
+   на iPhone за минуты, а не через публичный App Store.
+4. Настройте APNs (см. «Настройка» выше) — иначе push из шага 3 придут в
+   PWA-версии, но не в нативном приложении.
+
 ## Деплой на GitHub Pages
 
 Пуш в `main` или `claude/trello-like-task-app-sdlxis`, который затрагивает
@@ -136,12 +186,14 @@ workflow параллельно собирает и `app/` (Hedonist AI-marketer
 
 ```
 taskboard/
-  migrations/                 Схема БД, RLS, RPC — по порядку, 0001 → 0005
+  migrations/                 Схема БД, RLS, RPC — по порядку, 0001 → 0007
   supabase/functions/         send-push (пинг при назначении), due-reminders (cron), ai-chat (ИИ-ассистент)
-  src/lib/                     Supabase-клиент, авторизация, типы, push, ии, фоны
-  src/screens/                 AuthScreen, BoardsScreen, BoardScreen
+  supabase/functions/_shared/ apns.ts — минимальный клиент APNs (без npm-зависимостей)
+  src/lib/                     Supabase-клиент, авторизация, типы, push (Web + нативный), ии, фоны
+  src/screens/                 AuthScreen, BoardsScreen, BoardScreen, MobileApp (мобильная навигация)
   src/components/              CardModal, CardAIPanel, AISettingsModal, ShareModal, BackgroundModal
   src/sw.ts                    Service worker (кастомный, обрабатывает push)
+  capacitor.config.ts, ios/    Нативная iOS-обёртка (см. «Настоящее приложение для iPhone»)
 ```
 
 ## Модель данных
@@ -151,6 +203,8 @@ taskboard/
 `checklist_items` / `attachments` (файлы — в приватном Storage-бакете
 `attachments`, метаданные — в таблице) / `ai_messages` (история чата с
 ИИ-ассистентом по карточке). `push_subscriptions` — одна запись на
-браузер/устройство с включёнными уведомлениями. Всё под Row Level Security:
+браузер/устройство с включёнными Web Push-уведомлениями (PWA),
+`native_push_tokens` — то же самое для нативного iOS-приложения (APNs).
+Всё под Row Level Security:
 видно и редактируемо только участникам конкретной доски. Anthropic
 API-ключ ИИ-ассистента — не в таблице, а в Supabase Vault (см. «Настройка»).
