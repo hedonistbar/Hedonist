@@ -781,12 +781,16 @@ input.urgency-overdue {
 /* Mobile app shell — Home/Projects/Calendar/Profile screens. */
 /* ---------------------------------------------------------------------- */
 .mobile-app-shell {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 .mobile-tab-content {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 8px 20px 110px;
   max-width: 640px;
   width: 100%;

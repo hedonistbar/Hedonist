@@ -160,6 +160,19 @@ body,
   height: 100%;
 }
 
+/* Below the mobile breakpoint (matches useIsMobile's 680px), the page
+   itself must never scroll — only .mobile-tab-content does. A fixed nav
+   bar anchored to a scrolling document body visibly lags/swims during
+   scroll on iOS WebKit (fixed positioning was never fully decoupled from
+   document scroll there); pinning the outer document instead makes the
+   bar truly static regardless of how the content beneath it moves. */
+@media (max-width: 680px) {
+  html,
+  body {
+    overflow: hidden;
+  }
+}
+
 body {
   margin: 0;
   background: var(--ground);
