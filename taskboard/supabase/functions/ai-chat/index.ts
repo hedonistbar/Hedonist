@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
+import JSZip from "npm:jszip@3";
 
 const ATTACHMENTS_BUCKET = "attachments";
 const MAX_ATTACHMENTS = 4;
@@ -10,6 +11,33 @@ const MAX_BINARY_BYTES = 4 * 1024 * 1024; // 4MB — keeps the request payload s
 function isTextLike(contentType: string | null, fileName: string): boolean {
   if (contentType?.startsWith("text/") || contentType === "application/json") return true;
   return /\.(txt|md|csv|json|log)$/i.test(fileName);
+}
+
+function isDocx(contentType: string | null, fileName: string): boolean {
+  if (contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return true;
+  return /\.docx$/i.test(fileName);
+}
+
+// .docx is a zip of XML parts — no need for a full OOXML parser to read
+// plain text back out of it, just the word run/paragraph tags that carry
+// visible text. Good enough for "let the AI read this doc", not a general
+// Word-compatible renderer.
+async function extractDocxText(buffer: ArrayBuffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buffer);
+  const xml = await zip.file("word/document.xml")?.async("string");
+  if (!xml) return "";
+  return xml
+    .replace(/<w:p[ >]/g, "\n$&")
+    .replace(/<w:tab\/>/g, "\t")
+    .replace(/<w:br\/>/g, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 // Browsers preflight any cross-origin request carrying a custom
@@ -114,6 +142,22 @@ Deno.serve(async (req) => {
     }
     if ((a.size_bytes ?? 0) > MAX_BINARY_BYTES) {
       attachmentNotes.push(`«${a.file_name}» — слишком большой файл, не читаю содержимое.`);
+      continue;
+    }
+    if (isDocx(a.content_type, a.file_name)) {
+      const { data: blob } = await userClient.storage.from(ATTACHMENTS_BUCKET).download(a.storage_path);
+      if (blob) {
+        try {
+          const text = (await extractDocxText(await blob.arrayBuffer())).slice(0, MAX_TEXT_CHARS);
+          if (text) {
+            attachmentTexts.push(`Файл «${a.file_name}» (Word):\n${text}`);
+          } else {
+            attachmentNotes.push(`«${a.file_name}» — открыл, но не нашёл текста внутри.`);
+          }
+        } catch {
+          attachmentNotes.push(`«${a.file_name}» — не удалось прочитать содержимое .docx.`);
+        }
+      }
       continue;
     }
     if (a.content_type === "application/pdf") {

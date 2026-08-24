@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Document, Packer, Paragraph } from "docx";
 import { ATTACHMENTS_BUCKET, supabase } from "../lib/supabase";
 import { extractListItems, loadAiMessages, sendAiMessage } from "../lib/ai";
 import type { AiMessage, ChecklistItem } from "../lib/database.types";
+
+const DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const QUICK_PROMPTS = [
   { label: "📋 План проекта", prompt: "Составь подробный план по этой задаче: этапы, что нужно сделать на каждом, примерные сроки." },
@@ -106,9 +109,18 @@ export function CardAIPanel({
 
   async function attachAsFile(message: AiMessage) {
     setBusyMessageId(message.id);
-    const fileName = `ии-ответ-${new Date(message.created_at).toISOString().slice(0, 10)}.txt`;
+    const fileName = `ии-ответ-${new Date(message.created_at).toISOString().slice(0, 10)}.docx`;
     const path = `${boardId}/${cardId}/${crypto.randomUUID()}-${fileName}`;
-    const blob = new Blob([message.content], { type: "text/plain;charset=utf-8" });
+    // A real .docx (not .txt) so it fits alongside the card's other
+    // documents (contracts, translations) and opens directly in Word.
+    const doc = new Document({
+      sections: [
+        {
+          children: message.content.split("\n").map((line) => new Paragraph(line)),
+        },
+      ],
+    });
+    const blob = await Packer.toBlob(doc);
     const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(path, blob);
     if (!uploadError) {
       const { data: userData } = await supabase.auth.getUser();
@@ -117,7 +129,7 @@ export function CardAIPanel({
         card_id: cardId,
         file_name: fileName,
         storage_path: path,
-        content_type: "text/plain",
+        content_type: DOCX_CONTENT_TYPE,
         size_bytes: blob.size,
         uploaded_by: userData.user?.id ?? null,
       });
@@ -146,8 +158,8 @@ export function CardAIPanel({
         {messages.length === 0 && (
           <p className="sub ai-empty">
             Опишите, что нужно сделать по этой карточке — план, письмо, разбивку на шаги. Видит и вложения (текстовые
-            файлы, PDF, изображения) — можно спросить про их содержимое. Ответ можно одним кликом превратить в
-            чек-лист, прикрепить как файл или сделать описанием карточки.
+            файлы, PDF, изображения, документы Word/.docx) — можно спросить про их содержимое. Ответ можно одним
+            кликом превратить в чек-лист, сохранить как .docx-файл карточки или сделать описанием карточки.
           </p>
         )}
         {messages.map((m) => (
@@ -161,7 +173,7 @@ export function CardAIPanel({
                   </button>
                 )}
                 <button type="button" className="link-btn" disabled={busyMessageId === m.id} onClick={() => attachAsFile(m)}>
-                  прикрепить как файл
+                  сохранить как .docx
                 </button>
                 <button type="button" className="link-btn" disabled={busyMessageId === m.id} onClick={() => applyAsDescription(m)}>
                   как описание
