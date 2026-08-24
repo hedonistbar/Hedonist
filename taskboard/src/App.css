@@ -739,7 +739,7 @@ input.urgency-overdue {
    reference (Home/Projects/Calendar/Profile), not a skin over the board. */
 /* ---------------------------------------------------------------------- */
 .tab-bar {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
