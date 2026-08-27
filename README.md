@@ -5,6 +5,13 @@ brand's voice, brands images, queues posts for approval, and handles routine
 inbox/review replies. Multi-tenant from day one; pilot tenant is **Hedonist
 Bar & Kitchen** (Kyiv). Full spec: [`SPEC.md`](./SPEC.md).
 
+> This repo also hosts a **separate product**, unrelated to the above:
+> [`hospitality-platform/`](./hospitality-platform/) is an AI Digital
+> Onboarding & Presence Platform for small independent hospitality
+> businesses (chambres d'hôtes, gîtes, small hotels) that don't have a
+> digital presence yet. Different audience, different data model — see
+> [`hospitality-platform/README.md`](./hospitality-platform/README.md).
+
 This is **Phase 0** — the scaffold: multi-tenant database, the "kill switch"
 (стоп-кран), and an owner/admin interface. No content generation or
 publishing yet — that's Phase 1.
