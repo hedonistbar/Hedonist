@@ -1,0 +1,221 @@
+:root {
+  /* Design tokens taken verbatim from the Ivchenko HUB design handoff
+     (buildModes().light) — deep indigo accent on a warm off-white, not
+     the iOS-blue/cool-gray system this app started on. */
+  --ground: #f5f3ef;
+  --surface: #ffffff;
+  --surface-rgb: 255, 255, 255;
+  --surface-2: #efece5;
+  --border: rgba(27, 27, 34, 0.07);
+  --text: #1b1b22;
+  --text-muted: rgba(27, 27, 34, 0.55);
+  --accent: #3a3f72;
+  --accent-strong: color-mix(in oklch, #3a3f72, black 15%);
+  --accent-soft: color-mix(in oklch, #3a3f72, white 88%);
+  --success: oklch(50% 0.1 155);
+  --success-bg: color-mix(in oklch, oklch(50% 0.1 155), white 88%);
+  --danger: oklch(54% 0.16 25);
+  --danger-bg: oklch(93% 0.045 25);
+  --warning: oklch(60% 0.13 65);
+  --warning-bg: oklch(94% 0.05 80);
+  --overdue: oklch(54% 0.16 25);
+  --shadow: 0 1px 2px rgba(20, 20, 30, 0.05), 0 10px 30px -12px rgba(20, 20, 30, 0.18);
+  /* Liquid-glass edge: a hairline highlight along the top of translucent
+     surfaces, the way light catches the rim of a glass material. */
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --radius: 14px;
+  --radius-lg: 20px;
+  /* Animated backdrop blobs — an Apple dynamic-wallpaper-style ambient
+     layer behind the app chrome. Boards with their own custom background
+     (mesh/photo/flat) paint over this, so it only shows on the boards list
+     and on boards left at "default". */
+  --blob-1: oklch(84% 0.06 275);
+  --blob-2: oklch(88% 0.07 45);
+  --blob-3: oklch(89% 0.05 170);
+  --blob-opacity: 0.55;
+  --blob-blend: normal;
+}
+
+/* Follows the OS when the person hasn't picked a theme in the app.
+   :not([data-theme="light"]) lets an explicit light choice win even on a
+   dark system. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* buildModes().dark from the same handoff. */
+    --ground: #1a1a1e;
+    --surface: #242428;
+    --surface-rgb: 36, 36, 40;
+    --surface-2: #2e2e33;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #f4f3f1;
+    --text-muted: rgba(244, 243, 241, 0.6);
+    --accent: oklch(74% 0.11 275);
+    --accent-strong: color-mix(in oklch, oklch(74% 0.11 275), white 15%);
+    --accent-soft: color-mix(in oklch, oklch(74% 0.11 275) 20%, transparent);
+    --success: oklch(65% 0.12 155);
+    --success-bg: oklch(30% 0.05 155);
+    --danger: oklch(68% 0.16 25);
+    --danger-bg: oklch(32% 0.06 25);
+    --warning: oklch(75% 0.12 70);
+    --warning-bg: oklch(34% 0.05 75);
+    --overdue: oklch(68% 0.16 25);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+    --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --blob-1: oklch(42% 0.14 275);
+    --blob-2: oklch(38% 0.13 320);
+    --blob-3: oklch(40% 0.11 200);
+    --blob-opacity: 0.65;
+    --blob-blend: screen;
+  }
+}
+
+/* An explicit in-app choice — the toggle in the header — always wins,
+   regardless of the OS setting. */
+:root[data-theme="dark"] {
+  --ground: #1a1a1e;
+  --surface: #242428;
+  --surface-rgb: 36, 36, 40;
+  --surface-2: #2e2e33;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f4f3f1;
+  --text-muted: rgba(244, 243, 241, 0.6);
+  --accent: oklch(74% 0.11 275);
+  --accent-strong: color-mix(in oklch, oklch(74% 0.11 275), white 15%);
+  --accent-soft: color-mix(in oklch, oklch(74% 0.11 275) 20%, transparent);
+  --success: oklch(65% 0.12 155);
+  --success-bg: oklch(30% 0.05 155);
+  --danger: oklch(68% 0.16 25);
+  --danger-bg: oklch(32% 0.06 25);
+  --warning: oklch(75% 0.12 70);
+  --warning-bg: oklch(34% 0.05 75);
+  --overdue: oklch(68% 0.16 25);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --blob-1: oklch(42% 0.14 275);
+  --blob-2: oklch(38% 0.13 320);
+  --blob-3: oklch(40% 0.11 200);
+  --blob-opacity: 0.65;
+  --blob-blend: screen;
+}
+
+/* "Girls" — boho-chic, "Breakfast at Tiffany's"-inspired third theme from
+   the design reference: warm ivory + muted Tiffany teal, an animated
+   drifting gradient background, and a sparkle-burst micro-interaction
+   on task completion (see sparkle.ts). */
+:root[data-theme="girls"] {
+  --ground: linear-gradient(120deg, #fbf6ec 0%, #f3e3d3 22%, #d9ece7 48%, #f6e7dc 72%, #fbf6ec 100%);
+  --surface: #fffcf6;
+  --surface-rgb: 255, 252, 246;
+  --surface-2: #f6efe0;
+  --border: rgba(178, 140, 70, 0.22);
+  --text: #2b241f;
+  --text-muted: rgba(43, 36, 31, 0.58);
+  --accent: oklch(52% 0.06 195);
+  --accent-strong: color-mix(in oklch, oklch(52% 0.06 195), black 15%);
+  --accent-soft: color-mix(in oklch, oklch(52% 0.06 195), white 88%);
+  --success: oklch(52% 0.07 165);
+  --success-bg: color-mix(in oklch, oklch(52% 0.07 165), white 88%);
+  --danger: oklch(56% 0.15 30);
+  --danger-bg: oklch(93% 0.045 30);
+  --warning: oklch(66% 0.1 75);
+  --warning-bg: oklch(94% 0.04 80);
+  --overdue: oklch(56% 0.15 30);
+  --shadow: 0 1px 3px rgba(70, 50, 20, 0.09), 0 10px 30px -12px rgba(70, 50, 20, 0.16);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --blob-1: oklch(83% 0.07 195);
+  --blob-2: oklch(87% 0.09 80);
+  --blob-3: oklch(88% 0.06 20);
+  --blob-opacity: 0.6;
+  --blob-blend: normal;
+}
+@keyframes bohoDrift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+:root[data-theme="girls"] body {
+  background-size: 400% 400%;
+  animation: bohoDrift 22s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="girls"] body {
+    animation: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Below the mobile breakpoint (matches useIsMobile's 680px), the page
+   itself must never scroll — only .mobile-tab-content does. A fixed nav
+   bar anchored to a scrolling document body visibly lags/swims during
+   scroll on iOS WebKit (fixed positioning was never fully decoupled from
+   document scroll there); pinning the outer document instead makes the
+   bar truly static regardless of how the content beneath it moves. */
+@media (max-width: 680px) {
+  html,
+  body {
+    overflow: hidden;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font-family:
+    "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--accent);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: normal;
+}

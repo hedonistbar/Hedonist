@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Личный таск-менеджер: доски, списки, карточки" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    />
+    <title>Ivchenko Hub</title>
+    <script>
+      // Applied before first paint so switching themes (or a system-dark
+      // device) never flashes the wrong colors while the JS bundle loads.
+      (function () {
+        var pref = localStorage.getItem("ivchenko-theme");
+        if (pref === "light" || pref === "dark" || pref === "girls") {
+          document.documentElement.dataset.theme = pref;
+        }
+      })();
+    </script>
+    <script>
+      // If the app fails to start (script load failure, a runtime error
+      // during the first render, etc.) there is no console on a phone to see
+      // why — show it directly on screen instead of a silent blank page.
+      (function () {
+        function show(label, detail) {
+          var pre = document.createElement("pre");
+          pre.style.cssText =
+            "position:fixed;inset:0;margin:0;padding:16px;overflow:auto;z-index:99999;" +
+            "background:#a83f2c;color:#fff8ee;font:12px/1.5 monospace;white-space:pre-wrap;";
+          pre.textContent = label + "\n\n" + detail;
+          document.body.appendChild(pre);
+        }
+        window.addEventListener("error", function (e) {
+          show("Ошибка: " + (e.message || "unknown"), (e.error && e.error.stack) || e.filename + ":" + e.lineno);
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var r = e.reason;
+          show("Необработанная ошибка промиса:", (r && (r.stack || r.message)) || String(r));
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

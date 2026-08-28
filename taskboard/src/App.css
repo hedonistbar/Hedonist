@@ -1,0 +1,1544 @@
+/* ---------------------------------------------------------------------- */
+/* Animated backdrop — Apple dynamic-wallpaper-style drifting blobs behind
+   the app chrome. Fixed + first in the DOM, so normal stacking order alone
+   keeps it under every screen; a board with its own background paints an
+   opaque fill over it (see .board-screen inline style). blur() ends up on
+   its own compositor layer once, then only transform/scale animates — that
+   composites cheaply, unlike backdrop-filter which resamples every frame. */
+/* ---------------------------------------------------------------------- */
+.blob-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.blob {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: var(--blob-opacity);
+  mix-blend-mode: var(--blob-blend);
+  will-change: transform;
+}
+.blob-1 {
+  top: -8%;
+  left: -15%;
+  width: 75vw;
+  background: radial-gradient(circle, var(--blob-1) 0%, transparent 72%);
+  animation: blobFloat1 24s ease-in-out infinite alternate;
+}
+.blob-2 {
+  top: 30%;
+  left: 45%;
+  width: 85vw;
+  background: radial-gradient(circle, var(--blob-2) 0%, transparent 72%);
+  animation: blobFloat2 30s ease-in-out infinite alternate;
+}
+.blob-3 {
+  top: 65%;
+  left: -20%;
+  width: 70vw;
+  background: radial-gradient(circle, var(--blob-3) 0%, transparent 72%);
+  animation: blobFloat3 20s ease-in-out infinite alternate;
+}
+@keyframes blobFloat1 {
+  0% {
+    transform: translate(-10%, -10%) scale(1);
+  }
+  100% {
+    transform: translate(15%, 20%) scale(1.25);
+  }
+}
+@keyframes blobFloat2 {
+  0% {
+    transform: translate(10%, 15%) scale(1.1);
+  }
+  100% {
+    transform: translate(-20%, -5%) scale(0.9);
+  }
+}
+@keyframes blobFloat3 {
+  0% {
+    transform: translate(0%, 20%) scale(1);
+  }
+  100% {
+    transform: translate(20%, -15%) scale(1.2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blob {
+    animation: none;
+  }
+}
+/* Boosted while a board has explicitly picked "Живой фон" (dynamic-blobs),
+   so it reads as a deliberate choice rather than identical to the
+   unboosted backdrop a board with no background set already shows. Set on
+   body rather than .board-screen because .blob-bg is a DOM sibling of the
+   board screen, not an ancestor, so a CSS var set on .board-screen itself
+   wouldn't reach it. */
+body.dynamic-bg-boost {
+  --blob-opacity: 0.95;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(var(--surface-rgb), 0.72);
+  /* A large blur radius is the dominant cost of backdrop-filter on mobile
+     Safari — sticky + always visible, so keep this one cheap. */
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  box-shadow: var(--glass-edge);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar .brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.wordmark-hub {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.wordmark-ivchenko {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.topbar .brand h1 {
+  font-size: 19px;
+}
+
+.icon-btn {
+  border: none;
+  background: var(--surface-2);
+  color: var(--text);
+  /* Chip radius from the design reference — refined/tight, not pill-shaped. */
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-height: 40px;
+  font-size: 13.5px;
+  font-weight: 590;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+.icon-btn:hover {
+  opacity: 0.7;
+}
+.icon-btn:active {
+  opacity: 0.5;
+}
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Segmented chip row — matches the reference's THEME/LANGUAGE picker
+   pattern: light gray unselected chips, solid accent fill selected. */
+.theme-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 3px;
+}
+.theme-toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.theme-toggle-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+.theme-toggle-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.center-screen {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.spinner-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.card h2 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.card .sub {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+.sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 6px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.field label {
+  font-size: 12.5px;
+  font-weight: 590;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+.field input,
+.field textarea,
+.field select,
+input,
+textarea,
+select {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--text);
+  transition: border-color 0.15s ease;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--accent);
+}
+textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238e8e93'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 11px 18px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 590;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+}
+.btn-ghost {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover:not(:disabled) {
+  opacity: 0.75;
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.error-text {
+  font-size: 13px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.notice {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 590;
+  letter-spacing: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.pill.owner {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pill.member {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.team-row:last-child {
+  border-bottom: none;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Display typography — the reference design's two-font system: Cormorant
+   Garamond for display moments (screen titles, board name), Plus Jakarta
+   Sans for everything else (already the body default). Used sparingly, on
+   the handful of large headings, not general UI text. */
+/* ---------------------------------------------------------------------- */
+.display-title {
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+}
+.display-title-input {
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  min-width: 0;
+  flex: 1;
+}
+.display-title-input:hover,
+.display-title-input:focus {
+  border-color: var(--border);
+  outline: none;
+}
+.display-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Boards list */
+/* ---------------------------------------------------------------------- */
+.boards-screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.boards-screen .content {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 28px 20px 48px;
+}
+.new-board-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.new-board-form input {
+  flex: 1;
+}
+.boards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+.board-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-align: left;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.board-tile:hover {
+  transform: translateY(-2px);
+}
+.board-tile:active {
+  transform: scale(0.98);
+}
+.board-tile-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+.board-tile-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.board-tile-progress-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.board-tile-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.board-tile-track-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Board / lists / cards */
+/* ---------------------------------------------------------------------- */
+.board-screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.lists-row {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  overflow-x: auto;
+}
+
+.list-column {
+  flex: 0 0 268px;
+  /* Several of these can be on screen at once, each its own blurred layer —
+     the multiplying cost on mobile. Higher opacity + smaller radius keeps
+     the glass look without the GPU load of blurring N wide surfaces. */
+  background: rgba(var(--surface-rgb), 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 100%;
+  box-shadow: var(--shadow), var(--glass-edge);
+}
+.list-column.drag-overlay {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35);
+  cursor: grabbing;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 6px;
+  min-height: 32px;
+  cursor: grab;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.list-header:active {
+  cursor: grabbing;
+}
+.list-title {
+  font-weight: 650;
+  font-size: 14.5px;
+}
+
+.list-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 4px;
+}
+
+.card-face {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 13px;
+  cursor: pointer;
+  /* Deliberately lighter than --shadow (which is tuned for floating panels
+     like modals) — a task row should sit flush with the list, not float. */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.18s ease;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.card-face:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06), 0 18px 32px -14px rgba(0, 0, 0, 0.28);
+}
+.card-face.drag-overlay {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+  cursor: grabbing;
+}
+.card-face.done {
+  opacity: 0.72;
+}
+.card-face.done .card-face-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.card-checkbox {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 7px;
+  border: 2px solid var(--border);
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+}
+.card-checkbox:hover {
+  border-color: var(--accent);
+}
+.card-checkbox:active {
+  transform: scale(0.9);
+}
+.card-checkbox.checked {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.card-face-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-face-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-face-title {
+  font-size: 14.5px;
+  font-weight: 590;
+  line-height: 1.35;
+}
+.card-face-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.avatar {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 3px 8px;
+}
+.badge.urgency-soon {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+.badge.urgency-today,
+.badge.urgency-overdue {
+  color: var(--overdue);
+  background: var(--danger-bg);
+}
+
+input.urgency-soon {
+  border-color: var(--warning) !important;
+  color: var(--warning);
+}
+input.urgency-today,
+input.urgency-overdue {
+  border-color: var(--overdue) !important;
+  color: var(--overdue);
+}
+
+.add-card-btn {
+  text-align: left;
+  padding: 6px 6px;
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.inline-form input {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Flat "Список" view — the reference design's Home screen (grouped by due
+   date instead of columns), offered as a toggle alongside the kanban
+   board rather than replacing it. */
+/* ---------------------------------------------------------------------- */
+.task-list-view {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 18px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 16px 0 2px;
+}
+.task-section-label:first-child {
+  margin-top: 0;
+}
+.task-section-label.danger {
+  color: var(--overdue);
+}
+.task-row-list-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.task-row-list-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.task-completed-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 2px;
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.task-completed-chevron {
+  display: inline-block;
+  font-size: 16px;
+  transition: transform 0.15s ease;
+}
+.task-completed-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Mobile bottom tab bar — the actual navigation structure from the design
+   reference (Home/Projects/Calendar/Profile), not a skin over the board. */
+/* ---------------------------------------------------------------------- */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(var(--surface-rgb), 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  z-index: 30;
+}
+.tab-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  padding: 6px 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tab-bar-item.active {
+  color: var(--accent);
+}
+.tab-bar-icon {
+  display: flex;
+}
+.tab-bar-label {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Mobile app shell — Home/Projects/Calendar/Profile screens. */
+/* ---------------------------------------------------------------------- */
+.mobile-app-shell {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-tab-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 20px 110px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.mobile-tab-header {
+  margin: 6px 0 18px;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.05);
+}
+.filter-pill span {
+  color: var(--text-muted);
+}
+
+.fab {
+  position: fixed;
+  right: 22px;
+  bottom: calc(104px + env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(20, 20, 40, 0.28);
+  z-index: 25;
+}
+.fab:active {
+  transform: scale(0.94);
+}
+
+.cal-day-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.cal-day-chip {
+  flex: none;
+  width: 46px;
+  height: 58px;
+  border-radius: 16px;
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.05);
+}
+.cal-day-chip.today {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.cal-day-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+.cal-day-weekday {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.cal-day-num {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sparkle-star {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  animation: sparkleRise 0.95s ease-out forwards;
+}
+@keyframes sparkleRise {
+  0% {
+    transform: translateY(0) scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(-14px) scale(1) rotate(20deg);
+  }
+  100% {
+    transform: translateY(-100px) scale(0.85) rotate(70deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sparkle-star {
+    animation: none;
+    display: none;
+  }
+}
+
+/* Composer chip-pickers (Project/Due in the reference's Task Composer). */
+.picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.picker-chip {
+  border: none;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.picker-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.notif-toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  border: none;
+  background: var(--surface-2);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+.notif-toggle.on {
+  background: var(--accent);
+}
+.notif-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.notif-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: left 0.15s ease;
+}
+.notif-toggle.on .notif-toggle-knob {
+  left: 23px;
+}
+
+.profile-avatar {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.new-list-form {
+  flex: 0 0 268px;
+}
+.new-list-form input {
+  width: 100%;
+  background: rgba(var(--surface-rgb), 0.5);
+  border-style: dashed;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Board backgrounds */
+/* ---------------------------------------------------------------------- */
+.bg-photo-upload {
+  width: 100%;
+  aspect-ratio: 2.6;
+  border-radius: 14px;
+  border: 2px dashed var(--border);
+  background-color: var(--surface-2);
+  background-size: cover;
+  background-position: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 590;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+.bg-photo-upload:hover {
+  border-color: var(--accent);
+}
+.bg-photo-upload.active {
+  border-style: solid;
+  border-color: var(--accent);
+}
+.bg-photo-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Rounded-square swatch + label below, ring border on the active one —
+   the "Background & Colors" picker pattern from the design reference. */
+.bg-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 10px;
+}
+.bg-swatch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.bg-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--surface-2);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.06);
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.bg-swatch-blob-preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--surface-2);
+}
+.bg-swatch-blob-preview .blob {
+  filter: blur(6px);
+  opacity: 0.85;
+}
+.bg-swatch-blob-preview .blob-1 {
+  top: -10%;
+  left: -10%;
+  width: 55%;
+  background: radial-gradient(circle, var(--blob-1) 0%, transparent 72%);
+  animation-duration: 8s;
+}
+.bg-swatch-blob-preview .blob-2 {
+  top: 25%;
+  left: 35%;
+  width: 60%;
+  background: radial-gradient(circle, var(--blob-2) 0%, transparent 72%);
+  animation-duration: 10s;
+}
+.bg-swatch-blob-preview .blob-3 {
+  top: 50%;
+  left: -15%;
+  width: 50%;
+  background: radial-gradient(circle, var(--blob-3) 0%, transparent 72%);
+  animation-duration: 7s;
+}
+.bg-swatch:hover {
+  transform: scale(1.04);
+}
+.bg-swatch.active {
+  border: 2.5px solid var(--accent);
+}
+.bg-swatch-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.25;
+}
+.bg-swatch-item.active .bg-swatch-label {
+  font-weight: 700;
+  color: var(--text);
+}
+.bg-grid-flat {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.bg-swatch-none {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 13px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--border),
+    var(--border) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Modals */
+/* ---------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5vh 16px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 520px;
+  padding: 22px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.modal-header h2 {
+  flex: 1;
+  font-size: 19px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Card modal — Task Detail treatment from the design reference: serif
+   title, a full-width complete/incomplete button, and a divided info-card
+   for metadata instead of a stack of labeled form fields. */
+/* ---------------------------------------------------------------------- */
+.card-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.text-link-muted,
+.text-link-danger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.text-link-muted {
+  color: var(--text-muted);
+}
+.text-link-danger {
+  color: var(--danger);
+}
+
+.card-title-input {
+  display: block;
+  width: 100%;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--text);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  padding: 6px 0 10px;
+  border-radius: 0;
+}
+.card-title-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.mark-complete-btn {
+  display: block;
+  width: 100%;
+  margin: 16px 0 18px;
+  padding: 13px;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.mark-complete-btn:hover {
+  opacity: 0.88;
+}
+.mark-complete-btn.incomplete {
+  background: var(--accent);
+  color: #fff;
+}
+.mark-complete-btn.complete {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.05);
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.info-row:last-child {
+  border-bottom: none;
+}
+.info-row-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.info-row-value-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.info-row-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.info-row-select,
+.info-row-input {
+  border: none;
+  background: transparent;
+  text-align: right;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  padding: 0;
+  max-width: 60%;
+}
+.info-row-select:focus,
+.info-row-input:focus {
+  outline: none;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 18px 0 8px;
+}
+.section-label:first-of-type {
+  margin-top: 0;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.checkbox-label input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  padding: 0;
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+.checklist-item .done {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+.attachment-row:last-child {
+  border-bottom: none;
+}
+
+.ai-toggle-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.ai-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+.ai-panel label {
+  margin-bottom: 4px;
+}
+.ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.ai-empty {
+  margin: 4px 0;
+}
+.ai-bubble {
+  border-radius: 14px;
+  padding: 9px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 92%;
+  white-space: pre-wrap;
+}
+.ai-bubble-user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.ai-bubble-assistant {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.ai-thinking {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.ai-bubble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.ai-bubble-actions .link-btn {
+  padding: 2px 0;
+  font-size: 12.5px;
+}
+.ai-quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-quick-prompt {
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.ai-quick-prompt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------- */
+/* iPhone / narrow viewports — one list fills the screen, swipe between
+   them (scroll-snap, native paging feel) instead of a cramped multi-column
+   desktop layout; modals become bottom sheets like native iOS sheets. */
+/* ---------------------------------------------------------------------- */
+@media (max-width: 680px) {
+  .lists-row {
+    padding: 12px;
+    gap: 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .list-column,
+  .new-list-form {
+    flex: 0 0 calc(100vw - 48px);
+    scroll-snap-align: center;
+  }
+  .list-column {
+    max-height: none;
+  }
+
+  .boards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .topbar {
+    padding: 12px 16px;
+  }
+  .topbar .brand h1 {
+    font-size: 17px;
+  }
+
+  /* Three full-word chips don't fit next to the topbar's other buttons
+     on an iPhone — collapse to icon-only, same as the theme cycling
+     button this replaced. */
+  .theme-toggle-label {
+    display: none;
+  }
+  .theme-toggle-chip {
+    padding: 7px 8px;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .bg-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Google Calendar events (read-only, external — dashed border sets them
+   apart from the app's own editable task rows) */
+/* ---------------------------------------------------------------------- */
+.gcal-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gcal-event-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.4);
+}
+.gcal-event-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+.gcal-event-title {
+  font-size: 15px;
+  font-weight: 560;
+  color: var(--text);
+}

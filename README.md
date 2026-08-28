@@ -9,6 +9,10 @@ This is **Phase 0** — the scaffold: multi-tenant database, the "kill switch"
 (стоп-кран), and an owner/admin interface. No content generation or
 publishing yet — that's Phase 1.
 
+> This repo also hosts [`taskboard/`](./taskboard/README.md), an unrelated
+> personal Trello-like task manager — separate app, separate Supabase
+> project, sharing only this repo and its GitHub Pages deploy.
+
 ## Two interfaces, one database
 
 - **`app/`** — a mobile-installable web app (PWA). This is the primary
@@ -46,10 +50,10 @@ Security, see `migrations/0002_auth.sql`). There's no server to run.
    npm run dev
    ```
    Or deploy it: pushing to `main` (or `claude/new-session-25ghuh`) triggers
-   `.github/workflows/deploy-app.yml`, which builds `app/` and publishes it
-   to GitHub Pages. First run may need Pages enabled once under repo
-   Settings → Pages → Source: **GitHub Actions** (the workflow usually
-   enables this itself).
+   `.github/workflows/deploy-pages.yml`, which builds `app/` (and
+   `taskboard/`, see below) and publishes them together to GitHub Pages.
+   First run may need Pages enabled once under repo Settings → Pages →
+   Source: **GitHub Actions** (the workflow usually enables this itself).
 5. Open the app, sign up with email + password. The **first person** to sign
    up becomes the restaurant's **owner**; the owner then adds admins by
    email from the **Команда** (Team) tab — the admin has to have signed up
