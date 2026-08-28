@@ -78,11 +78,19 @@ export default function App() {
 
   function back() {
     let prevIndex = stepIndex - 1;
-    // 'discovering' auto-advances on its own — there's nothing to sit on
-    // when arriving at it backwards, so skip straight past it.
-    if (STEP_ORDER[prevIndex] === 'discovering') prevIndex -= 1;
+    while (prevIndex >= 0 && isTransient(STEP_ORDER[prevIndex])) prevIndex -= 1;
     if (prevIndex < 0) return;
     setStep(STEP_ORDER[prevIndex]);
+  }
+
+  // Steps that auto-advance themselves and would otherwise bounce straight
+  // back forward when landed on going backward: 'discovering' always does,
+  // and 'conflicts' does whenever the current graph has nothing to resolve
+  // (StepConflicts's own effect calls onResolve immediately in that case).
+  function isTransient(s: Step) {
+    if (s === 'discovering') return true;
+    if (s === 'conflicts') return !graph?.policies.checkIn.conflictsWith?.length;
+    return false;
   }
 
   function selectCandidate(c: Candidate) {
