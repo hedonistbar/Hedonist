@@ -288,6 +288,14 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
   const selectedCardMembers = selectedCard ? members.filter((m) => m.board_id === selectedCard.board_id) : [];
   const shareBoardMembership = shareBoard ? members.find((m) => m.board_id === shareBoard.id && m.user_id === userId) : null;
 
+  const isOwnerByBoard = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const m of members) {
+      if (m.user_id === userId && m.role === "owner") map[m.board_id] = true;
+    }
+    return map;
+  }, [members, userId]);
+
   async function toggleCardDone(card: Card) {
     const next = !card.is_done;
     setCards((prev) => prev.map((c) => (c.id === card.id ? { ...c, is_done: next } : c)));
@@ -299,6 +307,16 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
     if (error || !data) return;
     const board = data as Board;
     await supabase.from("lists").insert({ board_id: board.id, title: "Входящие", position: 0 });
+    load();
+  }
+
+  async function renameBoard(boardId: string, name: string) {
+    await supabase.from("boards").update({ name }).eq("id", boardId);
+    load();
+  }
+
+  async function deleteBoard(boardId: string) {
+    await supabase.from("boards").delete().eq("id", boardId);
     load();
   }
 
@@ -341,6 +359,7 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
         <ProjectsTab
           boards={boards}
           progressByBoard={progressByBoard}
+          isOwnerByBoard={isOwnerByBoard}
           onSelectProject={(boardId) => {
             setProjectFilter(boardId);
             setTab("home");
@@ -348,6 +367,8 @@ export function MobileApp({ userId, email }: { userId: string; email: string | n
           onShareBoard={setShareBoard}
           onBackgroundBoard={setBackgroundBoard}
           onCreateBoard={createBoard}
+          onRenameBoard={renameBoard}
+          onDeleteBoard={deleteBoard}
         />
       )}
       {tab === "calendar" && (

@@ -302,6 +302,11 @@ export function BoardScreen({
     getBoardBackgroundImageUrl(boardBackgroundImagePath).then(setBoardBackgroundImageUrl);
   }, [boardBackgroundImagePath]);
 
+  useEffect(() => {
+    document.body.classList.toggle("dynamic-bg-boost", boardBackground === "dynamic-blobs" && !boardBackgroundImagePath);
+    return () => document.body.classList.remove("dynamic-bg-boost");
+  }, [boardBackground, boardBackgroundImagePath]);
+
   const myMembership = members.find((m) => m.user_id === userId) ?? null;
   const isOwner = myMembership?.role === "owner";
 
@@ -342,6 +347,25 @@ export function BoardScreen({
     if (!confirm(`Удалить список «${list.title}» вместе со всеми карточками?`)) return;
     await supabase.from("lists").delete().eq("id", list.id);
     load();
+  }
+
+  async function saveBoardName() {
+    setError(null);
+    const { error: updateError } = await supabase
+      .from("boards")
+      .update({ name: boardName.trim() })
+      .eq("id", board.id);
+    if (updateError) setError(updateError.message);
+  }
+
+  async function deleteBoard() {
+    if (!confirm(`Удалить доску «${boardName}» вместе со всем содержимым?`)) return;
+    const { error: deleteError } = await supabase.from("boards").delete().eq("id", board.id);
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+    onBack();
   }
 
   async function addCard(listId: string, e: FormEvent) {
@@ -463,9 +487,19 @@ export function BoardScreen({
         <button className="icon-btn" onClick={onBack}>
           ← Доски
         </button>
-        <h1 className="display-title" style={{ fontSize: 22 }}>
-          {boardName}
-        </h1>
+        {isOwner ? (
+          <input
+            className="display-title-input"
+            style={{ fontSize: 22 }}
+            value={boardName}
+            onChange={(e) => setBoardName(e.target.value)}
+            onBlur={() => boardName.trim() && boardName !== board.name && saveBoardName()}
+          />
+        ) : (
+          <h1 className="display-title" style={{ fontSize: 22 }}>
+            {boardName}
+          </h1>
+        )}
         <div style={{ display: "flex", gap: 8 }}>
           <ThemeToggle />
           <button className="icon-btn" onClick={() => setShowBackground(true)}>
@@ -474,6 +508,11 @@ export function BoardScreen({
           <button className="icon-btn" onClick={() => setShowShare(true)}>
             Поделиться
           </button>
+          {isOwner && (
+            <button className="icon-btn" onClick={deleteBoard} title="Удалить доску">
+              🗑
+            </button>
+          )}
         </div>
       </div>
 

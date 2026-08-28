@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import type { BoardMember } from "../lib/database.types";
 
+type BoardInvite = { id: string; email: string; created_at: string };
+
 export function ShareModal({
   boardId,
   currentUserId,
@@ -14,6 +16,7 @@ export function ShareModal({
   onClose: () => void;
 }) {
   const [members, setMembers] = useState<BoardMember[]>([]);
+  const [invites, setInvites] = useState<BoardInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -28,6 +31,14 @@ export function ShareModal({
       .eq("board_id", boardId)
       .order("created_at", { ascending: true });
     setMembers((data as BoardMember[] | null) ?? []);
+    if (isOwner) {
+      const { data: invitesData } = await supabase
+        .from("board_invites")
+        .select("id, email, created_at")
+        .eq("board_id", boardId)
+        .order("created_at", { ascending: true });
+      setInvites((invitesData as BoardInvite[] | null) ?? []);
+    }
     setLoading(false);
   }
 
@@ -41,17 +52,30 @@ export function ShareModal({
     setBusy(true);
     setError(null);
     setSuccess(null);
-    const { error: rpcError } = await supabase.rpc("share_board_by_email", {
-      p_board_id: boardId,
-      p_email: email,
+    const { data, error: invokeError } = await supabase.functions.invoke("invite-board-member", {
+      body: { board_id: boardId, email },
     });
     setBusy(false);
-    if (rpcError) {
-      setError(rpcError.message);
+    if (invokeError) {
+      // supabase-js only exposes a parseable body on FunctionsHttpError,
+      // whose context is a Response — a network-level failure
+      // (FunctionsFetchError) carries a plain Error with no .json().
+      const context = (invokeError as { context?: unknown }).context;
+      const body = context instanceof Response ? await context.json().catch(() => null) : null;
+      setError(body?.error ?? invokeError.message);
       return;
     }
-    setSuccess(`${email} добавлен(а) на доску.`);
+    setSuccess(
+      data?.status === "invited"
+        ? `Приглашение отправлено на ${email} — доступ откроется автоматически после регистрации по ссылке в письме.`
+        : `${email} добавлен(а) на доску.`,
+    );
     setEmail("");
+    load();
+  }
+
+  async function cancelInvite(inviteId: string) {
+    await supabase.from("board_invites").delete().eq("id", inviteId);
     load();
   }
 
@@ -92,6 +116,17 @@ export function ShareModal({
                 </span>
               </div>
             ))}
+            {invites.map((inv) => (
+              <div className="team-row" key={inv.id}>
+                <span>{inv.email}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="pill">приглашён(а)</span>
+                  <button className="link-btn" style={{ padding: 0 }} onClick={() => cancelInvite(inv.id)}>
+                    отменить
+                  </button>
+                </span>
+              </div>
+            ))}
           </div>
         )}
 
@@ -109,7 +144,8 @@ export function ShareModal({
               />
             </div>
             <p className="sub" style={{ marginBottom: 12 }}>
-              Человек должен сначала зарегистрироваться в Ivchenko Hub с этим email.
+              Если у человека ещё нет аккаунта, мы отправим ему письмо со ссылкой для регистрации — доступ
+              к доске откроется автоматически, как только он перейдёт по ней.
             </p>
             {error && (
               <div className="error-text" style={{ marginBottom: 12 }}>

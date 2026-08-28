@@ -71,6 +71,11 @@ export const BOARD_BACKGROUNDS = [
   { id: "flat-marina", label: "Marina", kind: "flat", css: "#4a7a9e" },
   { id: "flat-lyons-blue", label: "Lyons Blue", kind: "flat", css: "#1f4a5c" },
   { id: "flat-shale-green", label: "Shale Green", kind: "flat", css: "#6b8a6f" },
+  // Reuses the app's own animated drifting-blob backdrop (see BlobBackdrop
+  // in App.tsx) as an explicit, persisted board background choice, boosted
+  // slightly so it reads as a deliberate pick rather than identical to
+  // "default" (which also lets the same backdrop show through unboosted).
+  { id: "dynamic-blobs", label: "Живой фон", kind: "animated", css: null },
 ] as const;
 
 export function backgroundCss(id: string | null): string | null {

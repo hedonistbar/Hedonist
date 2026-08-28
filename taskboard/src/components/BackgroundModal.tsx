@@ -33,10 +33,16 @@ export function BackgroundModal({
   }, [currentImagePath]);
 
   async function pick(id: string) {
-    await supabase
+    setError(null);
+    const { data, error: updateError } = await supabase
       .from("boards")
       .update({ background: id === "default" ? null : id, background_image_path: null })
-      .eq("id", boardId);
+      .eq("id", boardId)
+      .select();
+    if (updateError || !data || data.length === 0) {
+      setError(updateError?.message ?? "Не удалось изменить фон доски.");
+      return;
+    }
     onChanged();
     onClose();
   }
@@ -57,7 +63,17 @@ export function BackgroundModal({
       setError(uploadError ?? "Не удалось загрузить фото.");
       return;
     }
-    await supabase.from("boards").update({ background_image_path: path }).eq("id", boardId);
+    const { data, error: updateError } = await supabase
+      .from("boards")
+      .update({ background_image_path: path })
+      .eq("id", boardId)
+      .select();
+    if (updateError || !data || data.length === 0) {
+      setUploading(false);
+      setError(updateError?.message ?? "Не удалось сохранить фото как фон доски.");
+      await supabase.storage.from("board-backgrounds").remove([path]);
+      return;
+    }
     if (oldPath) {
       await supabase.storage.from("board-backgrounds").remove([oldPath]);
     }
@@ -98,7 +114,7 @@ export function BackgroundModal({
           Или выберите готовый фон (палитра Pantone 2026):
         </p>
         <div className="bg-grid">
-          {BOARD_BACKGROUNDS.filter((bg) => bg.kind !== "flat" || bg.id === "default").map((bg) => {
+          {BOARD_BACKGROUNDS.filter((bg) => bg.kind === "mesh" || bg.id === "default").map((bg) => {
             const active = !currentImagePath && (current ?? "default") === bg.id;
             return (
               <div key={bg.id} className={`bg-swatch-item${active ? " active" : ""}`}>
@@ -109,6 +125,29 @@ export function BackgroundModal({
                   onClick={() => pick(bg.id)}
                 >
                   {!bg.css && <span className="bg-swatch-none" />}
+                </button>
+                <span className="bg-swatch-label">{bg.label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="sub" style={{ marginTop: 18 }}>Живой фон:</p>
+        <div className="bg-grid">
+          {BOARD_BACKGROUNDS.filter((bg) => bg.kind === "animated").map((bg) => {
+            const active = !currentImagePath && current === bg.id;
+            return (
+              <div key={bg.id} className={`bg-swatch-item${active ? " active" : ""}`}>
+                <button
+                  type="button"
+                  className={`bg-swatch${active ? " active" : ""}`}
+                  onClick={() => pick(bg.id)}
+                >
+                  <span className="bg-swatch-blob-preview">
+                    <span className="blob blob-1" />
+                    <span className="blob blob-2" />
+                    <span className="blob blob-3" />
+                  </span>
                 </button>
                 <span className="bg-swatch-label">{bg.label}</span>
               </div>
