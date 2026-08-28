@@ -150,8 +150,80 @@ export function buildPropertyGraph(candidate: Candidate): PropertyGraph {
       { id: 'p2', url: placeholderImage('Chambre 1', '#a3866b'), label: 'Chambre "Remparts"', group: 'room', qualityScore: 58, isHero: false, enhancement: 'suggested' },
       { id: 'p3', url: placeholderImage('Chambre 1 (dup)', '#a3866b'), label: 'Chambre "Remparts" (doublon probable)', group: 'room', qualityScore: 55, isHero: false, isDuplicate: true, enhancement: 'none' },
       { id: 'p4', url: placeholderImage('Petit-déjeuner', '#c9a24b'), label: 'Table du petit-déjeuner', group: 'breakfast', qualityScore: 74, isHero: false, enhancement: 'none' },
-      { id: 'p5', url: placeholderImage('Jardin', '#5c8a5c'), label: 'Jardin', group: 'amenity', qualityScore: 39, isHero: false, enhancement: 'suggested' },
+      { id: 'p5', url: placeholderImage('Jardin', '#5c8a5c'), label: 'Jardin', group: 'common', qualityScore: 39, isHero: false, enhancement: 'suggested' },
     ],
+  };
+}
+
+// For a property with no discoverable online footprint at all — the
+// "aucun de ces résultats, mon établissement est nouveau" path. Nothing is
+// invented here: every SourcedField starts at confidence 0 with no
+// sources, and the content fields carry a writing prompt instead of a
+// fabricated AI example, since there is nothing real to base one on.
+export function buildBlankPropertyGraph(name: string, city: string): PropertyGraph {
+  const blank = <T,>(value: T) => sourced(value, [], 0);
+  const blankField = (key: string, label: string, prompt: string) => ({
+    key,
+    label,
+    current: '',
+    improved: prompt,
+    status: 'pending' as const,
+    isBlank: true,
+  });
+
+  return {
+    identity: {
+      name: blank(cap(name)),
+      type: blank(''),
+    },
+    location: {
+      address: blank(''),
+      city: cap(city),
+      country: 'France',
+    },
+    contacts: {
+      phone: blank(''),
+      email: blank(''),
+      website: blank<string | null>(null),
+    },
+    accommodation: {
+      roomCount: blank(0),
+    },
+    amenities: [],
+    foodAndBeverage: {
+      breakfast: blank(''),
+    },
+    policies: {
+      checkIn: blank(''),
+      checkOut: blank(''),
+      languages: blank([] as string[]),
+    },
+    descriptions: {
+      short: blankField(
+        'short',
+        'Description courte',
+        "Décrivez votre établissement en une phrase : ambiance, ce qui vous rend unique.",
+      ),
+      long: blankField(
+        'long',
+        'Description longue',
+        "Racontez votre établissement : les chambres, ce qu'on y trouve, l'atmosphère, ce que vos hôtes remarquent en premier.",
+      ),
+      seo: blankField(
+        'seo',
+        'Méta-description (SEO)',
+        "Résumez votre établissement et sa ville en une phrase pour Google — c'est ce que verront les visiteurs dans les résultats de recherche.",
+      ),
+      nearby: blankField(
+        'nearby',
+        'À proximité',
+        "Qu'y a-t-il à voir ou à faire à proximité ? Sites, restaurants, activités.",
+      ),
+    },
+    reviews: [],
+    operationalThemes: [],
+    listings: [],
+    photos: [],
   };
 }
 

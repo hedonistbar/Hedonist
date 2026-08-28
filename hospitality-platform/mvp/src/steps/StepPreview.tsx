@@ -4,6 +4,9 @@ import type { ContentField, PhotoAsset, PropertyGraph, WebsiteStyle } from '../t
 function textFor(field: ContentField): string {
   if (field.status === 'edited' && field.editedValue) return field.editedValue;
   if (field.status === 'kept') return field.current;
+  // A skipped blank field has no real content yet — field.improved there is
+  // only a writing prompt, never text to publish.
+  if (field.isBlank) return '';
   return field.improved;
 }
 
@@ -38,33 +41,46 @@ export function StepPreview({
       }
     >
       <div className={`site-preview site-preview-${style}`}>
-        <div className="site-hero" style={{ backgroundImage: `url(${hero?.url})` }}>
+        <div
+          className={`site-hero ${!hero ? 'site-hero-empty' : ''}`}
+          style={hero ? { backgroundImage: `url(${hero.url})` } : undefined}
+        >
           <div className="site-hero-overlay">
             <h2>{graph.identity.name.value}</h2>
             <p>{graph.location.city}, {graph.location.country}</p>
           </div>
         </div>
-        <div className="site-section">
-          <p>{textFor(graph.descriptions.long)}</p>
-        </div>
-        <div className="site-section site-amenities">
-          {graph.amenities.map((a) => (
-            <span className="amenity-pill" key={a.value}>{a.value}</span>
-          ))}
-        </div>
-        <div className="site-section site-gallery">
-          {gallery.map((p) => (
-            <img key={p.id} src={p.url} alt={p.label} />
-          ))}
-        </div>
-        <div className="site-section site-policies">
-          <span>Arrivée : {checkIn}</span>
-          <span>Départ : {graph.policies.checkOut.value}</span>
-        </div>
-        <div className="site-section site-nearby">
-          <h3>À proximité</h3>
-          <p>{textFor(graph.descriptions.nearby)}</p>
-        </div>
+        {textFor(graph.descriptions.long) && (
+          <div className="site-section">
+            <p>{textFor(graph.descriptions.long)}</p>
+          </div>
+        )}
+        {graph.amenities.length > 0 && (
+          <div className="site-section site-amenities">
+            {graph.amenities.map((a) => (
+              <span className="amenity-pill" key={a.value}>{a.value}</span>
+            ))}
+          </div>
+        )}
+        {gallery.length > 0 && (
+          <div className="site-section site-gallery">
+            {gallery.map((p) => (
+              <img key={p.id} src={p.url} alt={p.label} />
+            ))}
+          </div>
+        )}
+        {(checkIn || graph.policies.checkOut.value) && (
+          <div className="site-section site-policies">
+            {checkIn && <span>Arrivée : {checkIn}</span>}
+            {graph.policies.checkOut.value && <span>Départ : {graph.policies.checkOut.value}</span>}
+          </div>
+        )}
+        {textFor(graph.descriptions.nearby) && (
+          <div className="site-section site-nearby">
+            <h3>À proximité</h3>
+            <p>{textFor(graph.descriptions.nearby)}</p>
+          </div>
+        )}
         <button className="btn-primary site-cta">Réserver</button>
       </div>
     </Screen>

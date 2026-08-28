@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ProgressDots } from './components/ProgressDots';
-import { buildPropertyGraph, computeAutoFillPercentage, searchCandidates } from './data/mockDiscovery';
+import { buildBlankPropertyGraph, buildPropertyGraph, computeAutoFillPercentage, searchCandidates } from './data/mockDiscovery';
 import { StepBooking } from './steps/StepBooking';
 import { StepCandidates } from './steps/StepCandidates';
 import { StepCity } from './steps/StepCity';
@@ -48,6 +48,18 @@ const DEMO_SCORES: DigitalScoreBreakdown = {
   social: 34,
 };
 
+// A property with no discoverable footprint honestly starts at zero
+// everywhere — nothing to fabricate a score from yet.
+const BLANK_SCORES: DigitalScoreBreakdown = {
+  googleBusiness: 0,
+  booking: 0,
+  website: 0,
+  photos: 0,
+  reviews: 0,
+  directBooking: 0,
+  social: 0,
+};
+
 export default function App() {
   const [step, setStep] = useState<Step>('name');
   const [propertyName, setPropertyName] = useState('');
@@ -59,6 +71,7 @@ export default function App() {
   const [style, setStyle] = useState<WebsiteStyle>('classic');
   const [bookingMode, setBookingMode] = useState<'existing' | 'direct' | null>(null);
   const [bookingUrl, setBookingUrl] = useState('');
+  const [isManual, setIsManual] = useState(false);
 
   const autoFillPercentage = useMemo(() => (graph ? computeAutoFillPercentage(graph) : 0), [graph]);
   const stepIndex = STEP_ORDER.indexOf(step);
@@ -74,6 +87,16 @@ export default function App() {
 
   function selectCandidate(c: Candidate) {
     const g = buildPropertyGraph(c);
+    setIsManual(false);
+    setGraph(g);
+    setCheckIn(g.policies.checkIn.value);
+    setPhotos(g.photos);
+    setStep('score');
+  }
+
+  function selectManual() {
+    const g = buildBlankPropertyGraph(propertyName, city);
+    setIsManual(true);
     setGraph(g);
     setCheckIn(g.policies.checkIn.value);
     setPhotos(g.photos);
@@ -105,6 +128,7 @@ export default function App() {
     setStyle('classic');
     setBookingMode(null);
     setBookingUrl('');
+    setIsManual(false);
   }
 
   return (
@@ -137,12 +161,12 @@ export default function App() {
       {step === 'discovering' && <StepDiscovering onDone={() => setStep('candidates')} />}
 
       {step === 'candidates' && (
-        <StepCandidates candidates={candidates} onConfirm={selectCandidate} onBack={back} />
+        <StepCandidates candidates={candidates} onConfirm={selectCandidate} onManual={selectManual} onBack={back} />
       )}
 
       {step === 'score' && graph && (
         <StepDigitalScore
-          scores={DEMO_SCORES}
+          scores={isManual ? BLANK_SCORES : DEMO_SCORES}
           autoFillPercentage={autoFillPercentage}
           onNext={() => setStep('conflicts')}
           onBack={back}

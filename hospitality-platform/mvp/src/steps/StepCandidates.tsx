@@ -4,10 +4,12 @@ import type { Candidate } from '../types';
 export function StepCandidates({
   candidates,
   onConfirm,
+  onManual,
   onBack,
 }: {
   candidates: Candidate[];
   onConfirm: (c: Candidate) => void;
+  onManual: () => void;
   onBack?: () => void;
 }) {
   const [best, ...rest] = candidates;
@@ -51,6 +53,10 @@ export function StepCandidates({
           ))}
         </details>
       )}
+
+      <button className="btn-link" onClick={onManual}>
+        Aucun de ces résultats — mon établissement est nouveau
+      </button>
     </Screen>
   );
 }

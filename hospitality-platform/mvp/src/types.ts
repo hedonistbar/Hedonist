@@ -61,13 +61,19 @@ export type ContentField = {
   improved: string;
   status: 'pending' | 'accepted' | 'edited' | 'kept';
   editedValue?: string;
+  // True when nothing was discovered for this field at all — there is no
+  // "current" to compare against, so the UI should offer a plain writing
+  // prompt instead of a current-vs-improved comparison.
+  isBlank?: boolean;
 };
+
+export type PhotoGroup = 'exterior' | 'room' | 'breakfast' | 'common';
 
 export type PhotoAsset = {
   id: string;
   url: string;
   label: string;
-  group: 'exterior' | 'room' | 'breakfast' | 'amenity';
+  group: PhotoGroup;
   qualityScore: number; // 0..100
   isHero: boolean;
   isDuplicate?: boolean;

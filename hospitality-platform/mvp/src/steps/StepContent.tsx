@@ -42,6 +42,40 @@ export function StepContent({
     else onBack?.();
   }
 
+  function setBlankText(value: string) {
+    setItems((prev) => prev.map((f, i) => (i === index ? { ...f, editedValue: value, status: 'edited' } : f)));
+  }
+
+  function advanceBlank() {
+    if (isLast) onDone(items);
+    else setIndex(index + 1);
+  }
+
+  if (field.isBlank) {
+    return (
+      <Screen
+        eyebrow={`Étape 6 sur 11 — ${index + 1}/${items.length}`}
+        title={field.label}
+        subtitle="Rien n'a été trouvé pour ce texte — écrivez-le vous-même, ou passez si vous préférez le faire plus tard."
+        onBack={onBack ? back : undefined}
+        footer={
+          <button className="btn-primary" onClick={advanceBlank}>
+            Continuer
+          </button>
+        }
+      >
+        <textarea
+          autoFocus
+          className="text-area"
+          rows={5}
+          placeholder={field.improved}
+          value={field.editedValue ?? ''}
+          onChange={(e) => setBlankText(e.target.value)}
+        />
+      </Screen>
+    );
+  }
+
   return (
     <Screen
       eyebrow={`Étape 6 sur 11 — ${index + 1}/${items.length}`}
