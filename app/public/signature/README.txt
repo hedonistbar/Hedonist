@@ -1,0 +1,1 @@
+Temporary public asset for email signature.
