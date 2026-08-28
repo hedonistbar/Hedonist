@@ -4,14 +4,18 @@ import type { PropertyGraph } from '../types';
 
 export function StepConflicts({
   graph,
+  currentValue,
   onResolve,
+  onBack,
 }: {
   graph: PropertyGraph;
+  currentValue?: string;
   onResolve: (checkIn: string) => void;
+  onBack?: () => void;
 }) {
   const conflict = graph.policies.checkIn;
   const alt = conflict.conflictsWith?.[0];
-  const [choice, setChoice] = useState<string>(conflict.value);
+  const [choice, setChoice] = useState<string>(currentValue ?? conflict.value);
 
   useEffect(() => {
     // Nothing to resolve — this step is silently skipped when sources agree.
@@ -28,6 +32,7 @@ export function StepConflicts({
       eyebrow="Étape 5 sur 11"
       title="Une information diffère selon la source"
       subtitle="Nous ne montrons que ce qui pose question — tout le reste a déjà été rempli."
+      onBack={onBack}
       footer={
         <button className="btn-primary" onClick={() => onResolve(choice)}>
           Confirmer

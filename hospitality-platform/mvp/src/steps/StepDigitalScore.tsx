@@ -25,10 +25,12 @@ export function StepDigitalScore({
   scores,
   autoFillPercentage,
   onNext,
+  onBack,
 }: {
   scores: DigitalScoreBreakdown;
   autoFillPercentage: number;
   onNext: () => void;
+  onBack?: () => void;
 }) {
   const overall = Math.round(
     (Object.keys(scores) as (keyof DigitalScoreBreakdown)[]).reduce(
@@ -42,6 +44,7 @@ export function StepDigitalScore({
       eyebrow="Étape 4 sur 11"
       title="Votre bilan digital"
       subtitle={`Nous avons déjà rempli ${autoFillPercentage}% du profil de votre établissement sans vous poser une seule question.`}
+      onBack={onBack}
       footer={
         <button className="btn-primary" onClick={onNext}>
           Continuer

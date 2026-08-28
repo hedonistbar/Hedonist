@@ -1,14 +1,25 @@
 import { useState } from 'react';
 import { Screen } from '../components/Screen';
 
-export function StepBooking({ onNext }: { onNext: (choice: 'existing' | 'direct', url?: string) => void }) {
-  const [mode, setMode] = useState<'existing' | 'direct' | null>(null);
-  const [url, setUrl] = useState('');
+export function StepBooking({
+  initialMode,
+  initialUrl,
+  onNext,
+  onBack,
+}: {
+  initialMode?: 'existing' | 'direct' | null;
+  initialUrl?: string;
+  onNext: (choice: 'existing' | 'direct', url?: string) => void;
+  onBack?: () => void;
+}) {
+  const [mode, setMode] = useState<'existing' | 'direct' | null>(initialMode ?? null);
+  const [url, setUrl] = useState(initialUrl ?? '');
 
   return (
     <Screen
       eyebrow="Étape 9 sur 11"
       title="Comment vos clients réservent-ils aujourd'hui ?"
+      onBack={onBack}
       footer={
         mode === 'existing' ? (
           <button className="btn-primary" disabled={!url.trim()} onClick={() => onNext('existing', url.trim())}>

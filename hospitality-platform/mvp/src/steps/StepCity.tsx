@@ -5,10 +5,12 @@ export function StepCity({
   propertyName,
   value,
   onSearch,
+  onBack,
 }: {
   propertyName: string;
   value: string;
   onSearch: (city: string) => void;
+  onBack?: () => void;
 }) {
   const [city, setCity] = useState(value);
   return (
@@ -16,6 +18,7 @@ export function StepCity({
       eyebrow="Étape 2 sur 11"
       title="Dans quelle ville ?"
       subtitle={`Nous allons chercher tout ce qui existe déjà en ligne sur "${propertyName}".`}
+      onBack={onBack}
       footer={
         <button className="btn-primary" disabled={!city.trim()} onClick={() => onSearch(city.trim())}>
           Rechercher mon établissement

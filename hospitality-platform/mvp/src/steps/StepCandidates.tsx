@@ -4,15 +4,18 @@ import type { Candidate } from '../types';
 export function StepCandidates({
   candidates,
   onConfirm,
+  onBack,
 }: {
   candidates: Candidate[];
   onConfirm: (c: Candidate) => void;
+  onBack?: () => void;
 }) {
   const [best, ...rest] = candidates;
   return (
     <Screen
       eyebrow="Étape 3 sur 11"
       title="Nous avons trouvé votre établissement. C'est bien lui ?"
+      onBack={onBack}
       footer={<span className="hint">Vous pourrez corriger n'importe quelle information plus tard.</span>}
     >
       <div className="candidate-card candidate-best">

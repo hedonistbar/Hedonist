@@ -4,9 +4,11 @@ import { Screen } from '../components/Screen';
 export function StepPublish({
   autoFillPercentage,
   onRestart,
+  onBack,
 }: {
   autoFillPercentage: number;
   onRestart: () => void;
+  onBack?: () => void;
 }) {
   const [published, setPublished] = useState(false);
 
@@ -37,6 +39,7 @@ export function StepPublish({
       eyebrow="Étape 11 sur 11"
       title="Prêt à publier ?"
       subtitle="Une fois publié, votre site est accessible publiquement et connecté à la réservation."
+      onBack={onBack}
       footer={
         <button className="btn-primary" onClick={() => setPublished(true)}>
           Publier mon site

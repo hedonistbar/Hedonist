@@ -5,9 +5,11 @@ import type { ContentField } from '../types';
 export function StepContent({
   fields,
   onDone,
+  onBack,
 }: {
   fields: ContentField[];
   onDone: (fields: ContentField[]) => void;
+  onBack?: () => void;
 }) {
   const [items, setItems] = useState(fields);
   const [index, setIndex] = useState(0);
@@ -25,11 +27,18 @@ export function StepContent({
     else setIndex(index + 1);
   }
 
+  function back() {
+    setEditing(false);
+    if (index > 0) setIndex(index - 1);
+    else onBack?.();
+  }
+
   return (
     <Screen
       eyebrow={`Étape 6 sur 11 — ${index + 1}/${items.length}`}
       title={field.label}
       subtitle="L'IA a amélioré ce texte à partir de ce qu'elle a trouvé. Vous décidez."
+      onBack={onBack ? back : undefined}
       footer={
         editing ? (
           <div className="edit-actions">

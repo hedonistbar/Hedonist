@@ -13,12 +13,14 @@ export function StepPreview({
   checkIn,
   photos,
   onNext,
+  onBack,
 }: {
   graph: PropertyGraph;
   style: WebsiteStyle;
   checkIn: string;
   photos: PhotoAsset[];
   onNext: () => void;
+  onBack?: () => void;
 }) {
   const hero = photos.find((p) => p.isHero) ?? photos[0];
   const gallery = photos.filter((p) => p.id !== hero?.id);
@@ -28,6 +30,7 @@ export function StepPreview({
       eyebrow="Étape 10 sur 11"
       title="Aperçu de votre site"
       subtitle="Généré automatiquement à partir de vos informations. Rien à mettre en page."
+      onBack={onBack}
       footer={
         <button className="btn-primary" onClick={onNext}>
           Tout est bon, continuer

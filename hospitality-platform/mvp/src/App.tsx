@@ -57,9 +57,20 @@ export default function App() {
   const [checkIn, setCheckIn] = useState('');
   const [photos, setPhotos] = useState<PhotoAsset[]>([]);
   const [style, setStyle] = useState<WebsiteStyle>('classic');
+  const [bookingMode, setBookingMode] = useState<'existing' | 'direct' | null>(null);
+  const [bookingUrl, setBookingUrl] = useState('');
 
   const autoFillPercentage = useMemo(() => (graph ? computeAutoFillPercentage(graph) : 0), [graph]);
   const stepIndex = STEP_ORDER.indexOf(step);
+
+  function back() {
+    let prevIndex = stepIndex - 1;
+    // 'discovering' auto-advances on its own — there's nothing to sit on
+    // when arriving at it backwards, so skip straight past it.
+    if (STEP_ORDER[prevIndex] === 'discovering') prevIndex -= 1;
+    if (prevIndex < 0) return;
+    setStep(STEP_ORDER[prevIndex]);
+  }
 
   function selectCandidate(c: Candidate) {
     const g = buildPropertyGraph(c);
@@ -92,6 +103,8 @@ export default function App() {
     setCheckIn('');
     setPhotos([]);
     setStyle('classic');
+    setBookingMode(null);
+    setBookingUrl('');
   }
 
   return (
@@ -117,24 +130,34 @@ export default function App() {
             setCandidates(searchCandidates(propertyName, c));
             setStep('discovering');
           }}
+          onBack={back}
         />
       )}
 
       {step === 'discovering' && <StepDiscovering onDone={() => setStep('candidates')} />}
 
-      {step === 'candidates' && <StepCandidates candidates={candidates} onConfirm={selectCandidate} />}
+      {step === 'candidates' && (
+        <StepCandidates candidates={candidates} onConfirm={selectCandidate} onBack={back} />
+      )}
 
       {step === 'score' && graph && (
-        <StepDigitalScore scores={DEMO_SCORES} autoFillPercentage={autoFillPercentage} onNext={() => setStep('conflicts')} />
+        <StepDigitalScore
+          scores={DEMO_SCORES}
+          autoFillPercentage={autoFillPercentage}
+          onNext={() => setStep('conflicts')}
+          onBack={back}
+        />
       )}
 
       {step === 'conflicts' && graph && (
         <StepConflicts
           graph={graph}
+          currentValue={checkIn}
           onResolve={(value) => {
             setCheckIn(value);
             setStep('content');
           }}
+          onBack={back}
         />
       )}
 
@@ -142,20 +165,45 @@ export default function App() {
         <StepContent
           fields={[graph.descriptions.short, graph.descriptions.long, graph.descriptions.seo, graph.descriptions.nearby]}
           onDone={applyContent}
+          onBack={back}
         />
       )}
 
-      {step === 'photos' && <StepPhotos photos={photos} onNext={(p) => { setPhotos(p); setStep('style'); }} />}
-
-      {step === 'style' && <StepStyle onSelect={(s) => { setStyle(s); setStep('booking'); }} />}
-
-      {step === 'booking' && <StepBooking onNext={() => setStep('preview')} />}
-
-      {step === 'preview' && graph && (
-        <StepPreview graph={graph} style={style} checkIn={checkIn} photos={photos} onNext={() => setStep('publish')} />
+      {step === 'photos' && (
+        <StepPhotos photos={photos} onNext={(p) => { setPhotos(p); setStep('style'); }} onBack={back} />
       )}
 
-      {step === 'publish' && <StepPublish autoFillPercentage={autoFillPercentage} onRestart={restart} />}
+      {step === 'style' && (
+        <StepStyle selected={style} onSelect={(s) => { setStyle(s); setStep('booking'); }} onBack={back} />
+      )}
+
+      {step === 'booking' && (
+        <StepBooking
+          initialMode={bookingMode}
+          initialUrl={bookingUrl}
+          onNext={(mode, url) => {
+            setBookingMode(mode);
+            setBookingUrl(url ?? '');
+            setStep('preview');
+          }}
+          onBack={back}
+        />
+      )}
+
+      {step === 'preview' && graph && (
+        <StepPreview
+          graph={graph}
+          style={style}
+          checkIn={checkIn}
+          photos={photos}
+          onNext={() => setStep('publish')}
+          onBack={back}
+        />
+      )}
+
+      {step === 'publish' && (
+        <StepPublish autoFillPercentage={autoFillPercentage} onRestart={restart} onBack={back} />
+      )}
     </div>
   );
 }
