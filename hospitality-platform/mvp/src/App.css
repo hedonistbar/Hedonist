@@ -288,6 +288,9 @@ h1 {
   border-color: var(--accent);
   background: #fbf1e8;
 }
+.content-block-chosen {
+  box-shadow: 0 0 0 1px var(--accent);
+}
 .content-block-label {
   font-size: 11px;
   text-transform: uppercase;

@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { Screen } from '../components/Screen';
 import type { ContentField } from '../types';
 
+const STATUS_LABEL: Record<ContentField['status'], string> = {
+  pending: '',
+  accepted: 'Version IA acceptée',
+  edited: 'Votre version enregistrée',
+  kept: 'Original conservé',
+};
+
 export function StepContent({
   fields,
   onDone,
@@ -18,6 +25,8 @@ export function StepContent({
 
   const field = items[index];
   const isLast = index === items.length - 1;
+  const rightLabel = field.status === 'edited' ? 'Votre version' : "Version améliorée par l'IA";
+  const rightText = field.status === 'edited' && field.editedValue ? field.editedValue : field.improved;
 
   function apply(status: ContentField['status'], editedValue?: string) {
     const next = items.map((f, i) => (i === index ? { ...f, status, editedValue } : f));
@@ -57,7 +66,7 @@ export function StepContent({
             <button
               className="btn-secondary"
               onClick={() => {
-                setDraft(field.improved);
+                setDraft(field.status === 'edited' && field.editedValue ? field.editedValue : field.improved);
                 setEditing(true);
               }}
             >
@@ -73,16 +82,25 @@ export function StepContent({
       {editing ? (
         <textarea className="text-area" value={draft} onChange={(e) => setDraft(e.target.value)} rows={5} />
       ) : (
-        <div className="content-compare">
-          <div className="content-block">
-            <div className="content-block-label">Version actuelle</div>
-            <p>{field.current || <em>(vide)</em>}</p>
+        <>
+          {field.status !== 'pending' && (
+            <p className="hint">✓ {STATUS_LABEL[field.status]} — vous pouvez encore changer d'avis ci-dessous.</p>
+          )}
+          <div className="content-compare">
+            <div className={`content-block ${field.status === 'kept' ? 'content-block-chosen' : ''}`}>
+              <div className="content-block-label">Version actuelle</div>
+              <p>{field.current || <em>(vide)</em>}</p>
+            </div>
+            <div
+              className={`content-block content-block-improved ${
+                field.status === 'accepted' || field.status === 'edited' ? 'content-block-chosen' : ''
+              }`}
+            >
+              <div className="content-block-label">{rightLabel}</div>
+              <p>{rightText}</p>
+            </div>
           </div>
-          <div className="content-block content-block-improved">
-            <div className="content-block-label">Version améliorée par l'IA</div>
-            <p>{field.improved}</p>
-          </div>
-        </div>
+        </>
       )}
     </Screen>
   );
