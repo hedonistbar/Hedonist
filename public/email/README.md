@@ -2,6 +2,8 @@
 
 Corporate signature (no personal name, phone, or photo) — brand name "France Inside" linking to Inside.paris.
 
+Styled per the France Inside brand book (v1.0, Trello card "Бренд-бук France Inside v1.0"): Ink #1E1D1B body text, Olive #6B6B4E as the single accent (border + link), wordmark set in Cormorant Garamond with Georgia/Times New Roman fallback, body in Commissioner with Arial/Helvetica fallback. Email clients strip custom `@font-face`/Google Fonts on paste, so the brand fonts are named first and web-safe fallbacks carry the actual rendering.
+
 ## Install in Gmail
 
 1. Open `signature.html` in a browser.
