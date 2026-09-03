@@ -1,6 +1,6 @@
 # Gmail signature — France Inside
 
-Corporate signature (no personal name, phone, or photo) — brand name "France Inside" linking to inside.paris.
+Corporate signature (no personal name, phone, or photo) — brand name "France Inside" linking to Inside.paris.
 
 ## Install in Gmail
 
